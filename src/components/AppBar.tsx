@@ -1,10 +1,12 @@
 import { FC } from 'react';
 import Link from "next/link";
 import dynamic from 'next/dynamic';
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAutoConnect } from '../contexts/AutoConnectProvider';
 import NetworkSwitcher from './NetworkSwitcher';
 import NavElement from './nav-element';
+import { useWallet, useConnection } from '@solana/wallet-adapter-react';
+import useUserSOLBalanceStore from '../stores/useUserSOLBalanceStore';
 
 const WalletMultiButtonDynamic = dynamic(
   async () => (await import('@solana/wallet-adapter-react-ui')).WalletMultiButton,
@@ -14,6 +16,31 @@ const WalletMultiButtonDynamic = dynamic(
 export const AppBar: React.FC = () => {
   const { autoConnect, setAutoConnect } = useAutoConnect();
   const [isNavOpen, setIsNavOpen] = useState(false);
+  const { publicKey } = useWallet();
+  const { connection } = useConnection();
+  const balance = useUserSOLBalanceStore((s) => s.balance);
+  const { getUserSOLBalance } = useUserSOLBalanceStore();
+
+  useEffect(() => {
+    if (publicKey) {
+      // Fetch balance immediately when wallet connects
+      getUserSOLBalance(publicKey, connection);
+      
+      // Pro-tip: Subscribe to account changes to update balance in real-time!
+      const subscriptionId = connection.onAccountChange(
+        publicKey,
+        () => {
+          getUserSOLBalance(publicKey, connection);
+        },
+        'confirmed'
+      );
+
+      return () => {
+        connection.removeAccountChangeListener(subscriptionId);
+      };
+    }
+  }, [publicKey, connection, getUserSOLBalance]);
+
   return (
     <div>
       {/* NavBar / Header */}
@@ -64,6 +91,11 @@ export const AppBar: React.FC = () => {
             href="/basics"
             navigationStarts={() => setIsNavOpen(false)}
           />
+          {publicKey && (
+            <div className="flex items-center text-transparent bg-clip-text bg-gradient-to-br from-indigo-500 to-fuchsia-500 font-bold text-lg mr-4">
+              {(balance || 0).toLocaleString()} SOL
+            </div>
+          )}
           <WalletMultiButtonDynamic className="btn-ghost btn-sm rounded-btn text-lg mr-6 " />
         </div>
           <label

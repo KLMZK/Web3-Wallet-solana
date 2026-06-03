@@ -3,6 +3,7 @@ import { LAMPORTS_PER_SOL, TransactionSignature } from '@solana/web3.js';
 import { FC, useCallback, useState } from 'react';
 import { notify } from "../utils/notifications";
 import useUserSOLBalanceStore from '../stores/useUserSOLBalanceStore';
+import { useNetworkConfiguration } from '../contexts/NetworkConfigurationProvider';
 
 const FAUCET_API = 'https://faucet.solana.com';
 
@@ -10,6 +11,7 @@ export const RequestAirdrop: FC = () => {
     const { connection } = useConnection();
     const { publicKey } = useWallet();
     const { getUserSOLBalance } = useUserSOLBalanceStore();
+    const { networkConfiguration } = useNetworkConfiguration();
     const [loading, setLoading] = useState(false);
 
     const onClick = useCallback(async () => {
@@ -22,7 +24,24 @@ export const RequestAirdrop: FC = () => {
         setLoading(true);
         let signature: TransactionSignature = '';
 
-        // --- Method 1: Official Solana faucet API (higher limits) ---
+        // --- Localnet: direct RPC airdrop (unlimited, no rate limits) ---
+        if (networkConfiguration === 'localnet') {
+            try {
+                signature = await connection.requestAirdrop(publicKey, LAMPORTS_PER_SOL);
+                const latestBlockhash = await connection.getLatestBlockhash();
+                await connection.confirmTransaction({ signature, ...latestBlockhash }, 'confirmed');
+                notify({ type: 'success', message: '¡Airdrop exitoso! 🏠 (local)', txid: signature });
+                getUserSOLBalance(publicKey, connection);
+            } catch (error: any) {
+                notify({ type: 'error', message: 'Airdrop local fallido', description: error?.message });
+                console.log('error', `Local airdrop failed! ${error?.message}`);
+            } finally {
+                setLoading(false);
+            }
+            return;
+        }
+
+        // --- Method 1: Official Solana faucet API (devnet/testnet) ---
         try {
             const resp = await fetch(`${FAUCET_API}/api/request_airdrop`, {
                 method: 'POST',
@@ -76,7 +95,8 @@ export const RequestAirdrop: FC = () => {
         } finally {
             setLoading(false);
         }
-    }, [publicKey, connection, getUserSOLBalance]);
+    }, [publicKey, connection, getUserSOLBalance, networkConfiguration]);
+
 
     return (
         <div className="flex flex-col items-center gap-2">
