@@ -39,6 +39,6 @@ yarn-error.log*
 # logs
 *.log
 
-# solana keypairs & scripts de prueba (NUNCA subir claves privadas)
+# solana keypairs & test scripts (NEVER upload private keys)
 /scripts/
 *.json.bak

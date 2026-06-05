@@ -25,11 +25,11 @@ export interface TransferParams {
 }
 
 /**
- * Servicio reutilizable para realizar transferencias de SOL o tokens SPL
- * de forma compatible con la interfaz web (usando Wallet Adapter).
+ * Reusable service to perform SOL or SPL token transfers
+ * compatible with the web interface (using Wallet Adapter).
  * 
- * @param params Parámetros de la transferencia
- * @returns La firma (signature) de la transacción confirmada
+ * @param params Transfer parameters
+ * @returns The signature of the confirmed transaction
  */
 export async function executeTransfer({
     connection,
@@ -40,23 +40,23 @@ export async function executeTransfer({
     amount,
     mintAddress,
 }: TransferParams): Promise<string> {
-    // ── 1. VALIDACIÓN DE INPUTS ──────────────────────────────────────
+    // ── 1. INPUT VALIDATION ──────────────────────────────────────────
     let recipient: PublicKey;
     try {
         recipient = new PublicKey(recipientAddress);
     } catch (err) {
-        throw new Error('La dirección del destinatario no es una clave pública de Solana válida.');
+        throw new Error('Recipient address is not a valid Solana public key.');
     }
 
     if (amount <= 0) {
-        throw new Error('La cantidad a enviar debe ser mayor a cero.');
+        throw new Error('Amount to send must be greater than zero.');
     }
 
     const instructions = [];
 
-    // ── 2. CONSTRUCCIÓN DE INSTRUCCIONES ─────────────────────────────
+    // ── 2. INSTRUCTION CONSTRUCTION ─────────────────────────────────
     if (type === 'sol') {
-        // Enviar SOL nativo
+        // Send native SOL
         const lamports = amount * 1_000_000_000; // 1 SOL = 10^9 Lamports
         instructions.push(
             SystemProgram.transfer({
@@ -66,37 +66,37 @@ export async function executeTransfer({
             })
         );
     } else {
-        // Enviar token SPL
+        // Send SPL Token
         if (!mintAddress) {
-            throw new Error('Se requiere el Mint Address para enviar tokens SPL.');
+            throw new Error('Mint address is required to send SPL tokens.');
         }
 
         let mint: PublicKey;
         try {
             mint = new PublicKey(mintAddress);
         } catch (err) {
-            throw new Error('El Mint Address no es una clave pública de Solana válida.');
+            throw new Error('Mint address is not a valid Solana public key.');
         }
 
-        // Derivar las direcciones de las Cuentas Asociadas (ATA)
+        // Derive Associated Token Account (ATA) addresses
         const senderATA = await getAssociatedTokenAddress(mint, senderPublicKey);
         const recipientATA = await getAssociatedTokenAddress(mint, recipient);
 
-        // Verificar si el ATA del destinatario ya existe
+        // Check if recipient's ATA already exists
         const recipientATAInfo = await connection.getAccountInfo(recipientATA);
         if (recipientATAInfo === null) {
             instructions.push(
                 createAssociatedTokenAccountInstruction(
-                    senderPublicKey, // Quien paga la renta por abrir la cuenta
-                    recipientATA,      // Dirección de la cuenta asociada
-                    recipient,         // Propietario (destinatario)
+                    senderPublicKey, // Payer of the rent to open the account
+                    recipientATA,      // Associated token account address to create
+                    recipient,         // Owner (recipient)
                     mint               // Token Mint
                 )
             );
         }
 
-        // 9 decimales por defecto para tokens de prueba estándar. 
-        // Nota: En producción, se puede consultar dinámicamente con getMint(connection, mint).
+        // Default to 9 decimals for standard test tokens.
+        // Note: In production, this can be fetched dynamically using getMint(connection, mint).
         const decimals = 9;
         const amountInMinUnits = amount * Math.pow(10, decimals);
 
@@ -110,7 +110,7 @@ export async function executeTransfer({
         );
     }
 
-    // ── 3. CONSTRUCCIÓN DEL MENSAJE Y TRANSACCIÓN V0 ──────────────────
+    // ── 3. MESSAGE AND VERSIONED TRANSACTION V0 CONSTRUCTION ─────────
     const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
 
     const messageV0 = new TransactionMessage({
@@ -121,12 +121,12 @@ export async function executeTransfer({
 
     const transaction = new VersionedTransaction(messageV0);
 
-    // ── 4. SOLICITAR FIRMA AL WALLET ADAPTER Y ENVIAR ──────────────────
-    // sendTransaction se encarga de llamar al Wallet del navegador (Phantom/Solflare),
-    // solicitar la firma del usuario y transmitirla al nodo RPC.
+    // ── 4. REQUEST SIGNATURE FROM WALLET ADAPTER AND SEND ────────────
+    // sendTransaction handles calling the browser wallet (Phantom/Solflare),
+    // requesting the user's signature, and sending it to the RPC node.
     const signature = await sendTransaction(transaction, connection);
 
-    // ── 5. CONFIRMACIÓN DE LA TRANSACCIÓN ─────────────────────────────
+    // ── 5. TRANSACTION CONFIRMATION ──────────────────────────────────
     await connection.confirmTransaction({
         signature,
         blockhash,
