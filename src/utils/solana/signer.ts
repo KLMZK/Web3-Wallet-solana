@@ -10,6 +10,9 @@ import {
     createAssociatedTokenAccountInstruction,
     createTransferInstruction,
 } from '@solana/spl-token';
+import { verify } from '@noble/ed25519';
+
+// ── Types ──────────────────────────────────────────────────────────────────────
 
 export interface TransferParams {
     connection: Connection;
@@ -24,10 +27,12 @@ export interface TransferParams {
     mintAddress?: string;
 }
 
+// ── Functions ──────────────────────────────────────────────────────────────────
+
 /**
  * Reusable service to perform SOL or SPL token transfers
  * compatible with the web interface (using Wallet Adapter).
- * 
+ *
  * @param params Transfer parameters
  * @returns The signature of the confirmed transaction
  */
@@ -40,7 +45,7 @@ export async function executeTransfer({
     amount,
     mintAddress,
 }: TransferParams): Promise<string> {
-    // ── 1. INPUT VALIDATION ──────────────────────────────────────────
+    // 1. Input validation
     let recipient: PublicKey;
     try {
         recipient = new PublicKey(recipientAddress);
@@ -54,10 +59,10 @@ export async function executeTransfer({
 
     const instructions = [];
 
-    // ── 2. INSTRUCTION CONSTRUCTION ─────────────────────────────────
+    // 2. Instruction construction based on transfer type
     if (type === 'sol') {
-        // Send native SOL
-        const lamports = amount * 1_000_000_000; // 1 SOL = 10^9 Lamports
+        // Send native SOL: 1 SOL = 10^9 Lamports
+        const lamports = amount * 1_000_000_000;
         instructions.push(
             SystemProgram.transfer({
                 fromPubkey: senderPublicKey,
@@ -78,25 +83,25 @@ export async function executeTransfer({
             throw new Error('Mint address is not a valid Solana public key.');
         }
 
-        // Derive Associated Token Account (ATA) addresses
+        // Derive Associated Token Account (ATA) addresses for both sides
         const senderATA = await getAssociatedTokenAddress(mint, senderPublicKey);
         const recipientATA = await getAssociatedTokenAddress(mint, recipient);
 
-        // Check if recipient's ATA already exists
+        // If recipient's ATA does not exist on-chain, create it atomically
         const recipientATAInfo = await connection.getAccountInfo(recipientATA);
         if (recipientATAInfo === null) {
             instructions.push(
                 createAssociatedTokenAccountInstruction(
-                    senderPublicKey, // Payer of the rent to open the account
-                    recipientATA,      // Associated token account address to create
-                    recipient,         // Owner (recipient)
-                    mint               // Token Mint
+                    senderPublicKey, // Payer of rent for the new account
+                    recipientATA,    // New associated token account address
+                    recipient,       // Owner (recipient wallet)
+                    mint             // Token mint address
                 )
             );
         }
 
-        // Default to 9 decimals for standard test tokens.
-        // Note: In production, this can be fetched dynamically using getMint(connection, mint).
+        // Default to 9 decimals for standard tokens.
+        // Note: In production, fetch dynamically using getMint(connection, mint).
         const decimals = 9;
         const amountInMinUnits = amount * Math.pow(10, decimals);
 
@@ -110,7 +115,7 @@ export async function executeTransfer({
         );
     }
 
-    // ── 3. MESSAGE AND VERSIONED TRANSACTION V0 CONSTRUCTION ─────────
+    // 3. Build versioned transaction (V0 format)
     const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
 
     const messageV0 = new TransactionMessage({
@@ -121,17 +126,28 @@ export async function executeTransfer({
 
     const transaction = new VersionedTransaction(messageV0);
 
-    // ── 4. REQUEST SIGNATURE FROM WALLET ADAPTER AND SEND ────────────
-    // sendTransaction handles calling the browser wallet (Phantom/Solflare),
-    // requesting the user's signature, and sending it to the RPC node.
+    // 4. Request signature from Wallet Adapter (triggers browser wallet popup)
     const signature = await sendTransaction(transaction, connection);
 
-    // ── 5. TRANSACTION CONFIRMATION ──────────────────────────────────
-    await connection.confirmTransaction({
-        signature,
-        blockhash,
-        lastValidBlockHeight,
-    }, 'confirmed');
+    // 5. Wait for on-chain confirmation
+    await connection.confirmTransaction({ signature, blockhash, lastValidBlockHeight }, 'confirmed');
 
     return signature;
+}
+
+/**
+ * Verifies that a message was signed by the wallet matching the given public key.
+ * Uses the @noble/ed25519 library for cryptographic verification.
+ *
+ * @param signature - The raw signature bytes returned by wallet.signMessage()
+ * @param message   - The original message bytes that were signed
+ * @param publicKey - The Solana PublicKey of the signer
+ * @returns true if the signature is valid, false otherwise
+ */
+export async function verifyMessageSignature(
+    signature: Uint8Array,
+    message: Uint8Array,
+    publicKey: PublicKey
+): Promise<boolean> {
+    return verify(signature, message, publicKey.toBytes());
 }
