@@ -30,10 +30,10 @@ export const RequestAirdrop: FC = () => {
                 signature = await connection.requestAirdrop(publicKey, LAMPORTS_PER_SOL);
                 const latestBlockhash = await connection.getLatestBlockhash();
                 await connection.confirmTransaction({ signature, ...latestBlockhash }, 'confirmed');
-                notify({ type: 'success', message: '¡Airdrop exitoso! 🏠 (local)', txid: signature });
+                notify({ type: 'success', message: 'Airdrop successful! 🏠 (local)', txid: signature });
                 getUserSOLBalance(publicKey, connection);
             } catch (error: any) {
-                notify({ type: 'error', message: 'Airdrop local fallido', description: error?.message });
+                notify({ type: 'error', message: 'Local airdrop failed', description: error?.message });
                 console.log('error', `Local airdrop failed! ${error?.message}`);
             } finally {
                 setLoading(false);
@@ -85,8 +85,8 @@ export const RequestAirdrop: FC = () => {
             if (is429) {
                 notify({
                     type: 'error',
-                    message: 'Límite de airdrop alcanzado (429)',
-                    description: 'El faucet de devnet está saturado. Visita faucet.solana.com para obtener SOL de prueba.',
+                    message: 'Airdrop rate limit reached (429)',
+                    description: 'The devnet faucet is saturated. Visit faucet.solana.com to get test SOL.',
                 });
             } else {
                 notify({ type: 'error', message: 'Airdrop failed!', description: error?.message, txid: signature });
@@ -114,7 +114,7 @@ export const RequestAirdrop: FC = () => {
                 </div>
             </div>
             <p className="text-xs text-gray-400">
-                ¿Límite alcanzado? Obtén SOL en{' '}
+                Rate limit reached? Get SOL at{' '}
                 <a
                     href="https://faucet.solana.com"
                     target="_blank"
@@ -123,7 +123,7 @@ export const RequestAirdrop: FC = () => {
                 >
                     faucet.solana.com
                 </a>
-                {' '}o{' '}
+                {' '}or{' '}
                 <a
                     href="https://solfaucet.com"
                     target="_blank"
