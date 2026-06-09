@@ -46,6 +46,7 @@ interface HomeContentProps {
   splTokens: SPLToken[];
   loadingTokens: boolean;
   setActiveTab: (t: Tab) => void;
+  onSendClick: () => void;
 }
 
 export const HomeContent: FC<HomeContentProps> = ({
@@ -54,6 +55,7 @@ export const HomeContent: FC<HomeContentProps> = ({
   splTokens,
   loadingTokens,
   setActiveTab,
+  onSendClick,
 }) => {
   const fiatValue = solPrice ? (balance * solPrice).toFixed(2) : '0.00';
 
@@ -101,7 +103,7 @@ export const HomeContent: FC<HomeContentProps> = ({
             {
               label: 'Send',
               icon: <ArrowUpRight size={20} className="text-[#dea001]" />,
-              onClick: () => setActiveTab('send'),
+              onClick: onSendClick,
             },
             {
               label: 'Receive',

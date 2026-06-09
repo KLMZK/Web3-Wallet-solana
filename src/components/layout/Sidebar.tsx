@@ -1,12 +1,12 @@
 import { FC } from 'react';
-import { Home, BarChart2, ArrowUpRight, Settings } from 'lucide-react';
+import { Home, BarChart2, History, Settings } from 'lucide-react';
 import HexLogo from '../ui/HexLogo';
 
 const C = {
   border: 'rgba(222, 160, 1, 0.1)',
 } as const;
 
-export type Tab = 'home' | 'market' | 'send' | 'settings';
+export type Tab = 'home' | 'market' | 'history' | 'settings';
 
 interface SidebarProps {
   active: Tab;
@@ -17,7 +17,7 @@ const Sidebar: FC<SidebarProps> = ({ active, onChange }) => {
   const tabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
     { key: 'home',     label: 'Home',     icon: <Home size={20} /> },
     { key: 'market',   label: 'Market',   icon: <BarChart2 size={20} /> },
-    { key: 'send',     label: 'Send',     icon: <ArrowUpRight size={20} /> },
+    { key: 'history',  label: 'History',  icon: <History size={20} /> },
     { key: 'settings', label: 'Settings', icon: <Settings size={20} /> },
   ];
 

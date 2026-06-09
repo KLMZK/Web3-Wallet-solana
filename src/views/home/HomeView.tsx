@@ -16,7 +16,7 @@ import ConnectWallet from '../../components/ConnectWallet';
 // Views
 import { HomeContent, SPLToken, tokenColor } from './HomeContent';
 import { MarketSwapView } from '../market/MarketSwapView';
-import { SendView } from '../send/SendView';
+import { SendModal } from '../send/SendModal';
 import { SettingsView } from '../settings/SettingsView';
 
 /* ─────────────────────────────────────────────
@@ -46,6 +46,7 @@ export const HomeView: FC = () => {
   const [splTokens, setSplTokens] = useState<SPLToken[]>([]);
   const [loadingTokens, setLoadingTokens] = useState(false);
   const [solPrice, setSolPrice] = useState<number | null>(null);
+  const [sendModalOpen, setSendModalOpen] = useState(false);
 
   // Map networkConfiguration hook value to UI label
   const networkUI: NetworkUI =
@@ -59,12 +60,28 @@ export const HomeView: FC = () => {
     [setNetworkConfiguration]
   );
 
-  // ── Fetch SOL balance ─────────────────────
+  // ── Fetch SOL & SPL Balances + Real-time Listener ─────────────────────
   useEffect(() => {
-    if (publicKey) {
-      getUserSOLBalance(publicKey, connection);
-    }
-  }, [publicKey, connection, getUserSOLBalance]);
+    if (!publicKey) return;
+
+    // 1. Initial fetch on mount or wallet change
+    getUserSOLBalance(publicKey, connection);
+    
+    // 2. Subscribe to wallet account changes (fires when SOL balance changes, e.g. paying fees)
+    const subscriptionId = connection.onAccountChange(
+      publicKey,
+      () => {
+        // When the account changes, refresh both SOL and SPL balances
+        getUserSOLBalance(publicKey, connection);
+        fetchSPLTokens();
+      },
+      'confirmed'
+    );
+
+    return () => {
+      connection.removeAccountChangeListener(subscriptionId);
+    };
+  }, [publicKey, connection, getUserSOLBalance, fetchSPLTokens]);
 
   // ── SOL/USD Price — CoinGecko primary, Jupiter fallback, 60s refresh ──
   useEffect(() => {
@@ -158,6 +175,7 @@ export const HomeView: FC = () => {
      STATE B — Connected → Dashboard
   ═══════════════════════════════════════════ */
   return (
+    <>
     <DashboardLayout
       activeTab={activeTab}
       setActiveTab={setActiveTab}
@@ -175,6 +193,7 @@ export const HomeView: FC = () => {
           splTokens={splTokens}
           loadingTokens={loadingTokens}
           setActiveTab={setActiveTab}
+          onSendClick={() => setSendModalOpen(true)}
         />
       )}
 
@@ -182,8 +201,11 @@ export const HomeView: FC = () => {
         <MarketSwapView solBalance={balance} />
       )}
 
-      {activeTab === 'send' && (
-        <SendView solBalance={balance} />
+      {activeTab === 'history' && (
+        <div className="flex flex-col items-center justify-center h-full text-[#7a8fa6] pt-20">
+            <h2 className="text-2xl font-bold text-white mb-2">Transaction History</h2>
+            <p>Coming soon...</p>
+        </div>
       )}
 
       {activeTab === 'settings' && (
@@ -197,5 +219,7 @@ export const HomeView: FC = () => {
         />
       )}
     </DashboardLayout>
+      <SendModal isOpen={sendModalOpen} onClose={() => setSendModalOpen(false)} />
+    </>
   );
 };
