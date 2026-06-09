@@ -60,28 +60,7 @@ export const HomeView: FC = () => {
     [setNetworkConfiguration]
   );
 
-  // ── Fetch SOL & SPL Balances + Real-time Listener ─────────────────────
-  useEffect(() => {
-    if (!publicKey) return;
 
-    // 1. Initial fetch on mount or wallet change
-    getUserSOLBalance(publicKey, connection);
-    
-    // 2. Subscribe to wallet account changes (fires when SOL balance changes, e.g. paying fees)
-    const subscriptionId = connection.onAccountChange(
-      publicKey,
-      () => {
-        // When the account changes, refresh both SOL and SPL balances
-        getUserSOLBalance(publicKey, connection);
-        fetchSPLTokens();
-      },
-      'confirmed'
-    );
-
-    return () => {
-      connection.removeAccountChangeListener(subscriptionId);
-    };
-  }, [publicKey, connection, getUserSOLBalance, fetchSPLTokens]);
 
   // ── SOL/USD Price — CoinGecko primary, Jupiter fallback, 60s refresh ──
   useEffect(() => {
@@ -149,6 +128,29 @@ export const HomeView: FC = () => {
     if (connected && publicKey) fetchSPLTokens();
     else setSplTokens([]);
   }, [connected, publicKey, fetchSPLTokens]);
+
+  // ── Fetch SOL & SPL Balances + Real-time Listener ─────────────────────
+  useEffect(() => {
+    if (!publicKey) return;
+
+    // 1. Initial fetch on mount or wallet change
+    getUserSOLBalance(publicKey, connection);
+    
+    // 2. Subscribe to wallet account changes (fires when SOL balance changes, e.g. paying fees)
+    const subscriptionId = connection.onAccountChange(
+      publicKey,
+      () => {
+        // When the account changes, refresh both SOL and SPL balances
+        getUserSOLBalance(publicKey, connection);
+        fetchSPLTokens();
+      },
+      'confirmed'
+    );
+
+    return () => {
+      connection.removeAccountChangeListener(subscriptionId);
+    };
+  }, [publicKey, connection, getUserSOLBalance, fetchSPLTokens]);
 
   // ── Disconnect ────────────────────────────
   const handleDisconnect = useCallback(async () => {
