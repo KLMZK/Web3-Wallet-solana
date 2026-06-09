@@ -1,17 +1,9 @@
 // src/pages/_app.tsx
 // ─────────────────────────────────────────────────────────────────────────────
-// CHANGES vs original scaffold:
-//   - Removed: <AppBar />, <Footer />, <ContentContainer />
-//   - Full background: #10131c with gold radial glow at top-center (fixed, zIndex 0)
-//   - <ContextProvider> and <Notifications /> remain unchanged
-//   - <Component /> renders directly without generic wrappers
-// ─────────────────────────────────────────────────────────────────────────────// src/pages/_app.tsx
-// ─────────────────────────────────────────────────────────────────────────────
-// CHANGES vs original scaffold:
-//   - Removed: <AppBar />, <Footer />, <ContentContainer />
-//   - Full background: #10131c with gold radial glow at top-center (fixed, zIndex 0)
-//   - <ContextProvider> and <Notifications /> remain unchanged
-//   - <Component /> renders directly without generic wrappers
+// Xpectre Wallet — App Shell
+// - Full dark background (#121921) with decorative gold radial glow
+// - ContextProvider wraps all Solana wallet adapters + network config
+// - Notifications (toast) system from scaffold
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { AppProps } from 'next/app';
@@ -28,49 +20,31 @@ const App: FC<AppProps> = ({ Component, pageProps }) => {
     <>
       <Head>
         <title>Xpectre Wallet</title>
-        <meta name="description" content="Xpectre Labs — Solana Web3 Wallet" />
+        <meta name="description" content="Xpectre Labs — Solana Web3 Wallet Dashboard" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
       <ContextProvider>
-        {/*
-          Root shell: covers 100vw / 100vh, background color #10131c.
-          The gold radial glow is set as a decorative layer (z-index 0).
-          The actual content goes at z-index 1.
-        */}
-        <div
-          style={{
-            backgroundColor: '#10131c',
-            minHeight: '100vh',
-            width: '100%',
-            position: 'relative',
-            fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif",
-          }}
-        >
-          {/* ── Radial gold glow — decorative, non-interactive ── */}
+        {/* Root shell: Quitamos el 'relative' y actualizamos el fondo al de tu Figma */}
+        <div className="min-h-screen flex flex-col font-sans" style={{ backgroundColor: '#121921', color: '#f0f4f8' }}>
+
+          {/* Decorative gold radial glow: Quitamos el z-0 innecesario */}
           <div
             aria-hidden="true"
+            className="fixed top-0 left-0 right-0 w-full h-[500px] pointer-events-none"
             style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              width: '100%',
-              height: 420,
-              background:
-                'radial-gradient(circle at top center, rgba(222,160,1,0.10) 0%, transparent 70%)',
-              pointerEvents: 'none',
-              zIndex: 0,
+              background: 'radial-gradient(circle at top center, rgba(222, 160, 1, 0.1) 0%, transparent 70%)',
             }}
           />
 
-          {/* ── Global notifications (toast) ── */}
+          {/* Toast notifications */}
           <Notifications />
 
-          {/* ── Active page ── */}
-          <div style={{ position: 'relative', zIndex: 1 }}>
+          {/* Active page: ¡Adiós a la cárcel del 'relative z-[1]'! */}
+          <div className="flex-1 w-full flex flex-col">
             <Component {...pageProps} />
           </div>
+
         </div>
       </ContextProvider>
     </>
