@@ -1,0 +1,55 @@
+import { FC } from 'react';
+import { Home, BarChart2, ArrowUpRight, Settings } from 'lucide-react';
+import { Tab } from './Sidebar';
+
+const C = {
+  bg: '#10131c',
+  gold: '#dea001',
+  muted: '#7a8fa6',
+  border: 'rgba(222, 160, 1, 0.1)',
+} as const;
+
+interface BottomNavProps {
+  active: Tab;
+  onChange: (t: Tab) => void;
+}
+
+const BottomNav: FC<BottomNavProps> = ({ active, onChange }) => {
+  const tabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
+    { key: 'home',     label: 'Home',     icon: <Home size={24} /> },
+    { key: 'market',   label: 'Market',   icon: <BarChart2 size={24} /> },
+    { key: 'send',     label: 'Send',     icon: <ArrowUpRight size={24} /> },
+    { key: 'settings', label: 'Settings', icon: <Settings size={24} /> },
+  ];
+
+  return (
+    <nav
+      className="md:hidden sticky bottom-0 z-30 flex border-t"
+      style={{
+        backgroundColor: C.bg,
+        borderColor: C.border,
+        paddingBottom: 'env(safe-area-inset-bottom)',
+      }}
+    >
+      <div className="w-full flex">
+        {tabs.map((t) => (
+          <button
+            key={t.key}
+            onClick={() => onChange(t.key)}
+            className="flex-1 flex flex-col items-center gap-1.5 py-3.5 bg-transparent border-none cursor-pointer transition-colors border-t-2"
+            style={{
+              color: active === t.key ? C.gold : C.muted,
+              borderColor: active === t.key ? C.gold : 'transparent',
+              marginTop: -1,
+            }}
+          >
+            {t.icon}
+            <span className="text-[11px] font-bold">{t.label}</span>
+          </button>
+        ))}
+      </div>
+    </nav>
+  );
+};
+
+export default BottomNav;
