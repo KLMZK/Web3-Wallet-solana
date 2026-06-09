@@ -98,11 +98,19 @@ export async function executeTransfer({
         }
 
         // Derive Associated Token Account (ATA) addresses for both sides
-        const senderATA = await getAssociatedTokenAddress(mint, senderPublicKey);
+        // getAssociatedTokenAddress is a pure PDA derivation — no network call
+        const senderATA    = await getAssociatedTokenAddress(mint, senderPublicKey);
         const recipientATA = await getAssociatedTokenAddress(mint, recipient);
 
-        // If recipient's ATA does not exist on-chain, create it atomically
-        const recipientATAInfo = await connection.getAccountInfo(recipientATA);
+        // Check on-chain whether the recipient already has a token account.
+        // If not, we add an instruction to create it (costs ~0.002 SOL in rent).
+        let recipientATAInfo;
+        try {
+            recipientATAInfo = await connection.getAccountInfo(recipientATA);
+        } catch (err) {
+            throw handleError(err, 'executeTransfer — getAccountInfo (recipient ATA)');
+        }
+
         if (recipientATAInfo === null) {
             instructions.push(
                 createAssociatedTokenAccountInstruction(
@@ -130,7 +138,15 @@ export async function executeTransfer({
     }
 
     // 3. Build versioned transaction (V0 format)
-    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
+    let blockhash: string;
+    let lastValidBlockHeight: number;
+    try {
+        const result = await connection.getLatestBlockhash();
+        blockhash            = result.blockhash;
+        lastValidBlockHeight = result.lastValidBlockHeight;
+    } catch (err) {
+        throw handleError(err, 'executeTransfer — getLatestBlockhash');
+    }
 
     const messageV0 = new TransactionMessage({
         payerKey: senderPublicKey,
