@@ -2,9 +2,7 @@ import { FC } from 'react';
 import { Home, BarChart2, History, Settings } from 'lucide-react';
 import HexLogo from '../ui/HexLogo';
 
-const C = {
-  border: 'rgba(222, 160, 1, 0.1)',
-} as const;
+import { C } from '../../utils/theme';
 
 export type Tab = 'home' | 'market' | 'history' | 'settings';
 

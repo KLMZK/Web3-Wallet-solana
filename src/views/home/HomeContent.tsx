@@ -8,14 +8,7 @@ import {
 import SkeletonRow from '../../components/ui/SkeletonRow';
 import { Tab } from '../../components/layout/Sidebar';
 
-const C = {
-  surface: 'rgba(255, 255, 255, 0.03)',
-  gold: '#dea001',
-  text: '#ffffff',
-  muted: '#7a8fa6',
-  green: '#4ade80',
-  border: 'rgba(222, 160, 1, 0.1)',
-} as const;
+import { C } from '../../utils/theme';
 
 // Token brand colors for known SPL token symbols
 const TOKEN_COLORS: Record<string, string> = {

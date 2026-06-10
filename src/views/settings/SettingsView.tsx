@@ -1,21 +1,10 @@
 import { FC } from 'react';
-import dynamic from 'next/dynamic';
 import { Copy, RefreshCcw, LogOut } from 'lucide-react';
 import Toggle from '../../components/ui/Toggle';
-import { notify } from '../../utils/notifications';
+import { useCopyToClipboard } from '../../hooks/useCopyToClipboard';
+import WalletButton from '../../components/ui/WalletButton';
 
-const WalletMultiButtonDynamic = dynamic(
-  async () => (await import('@solana/wallet-adapter-react-ui')).WalletMultiButton,
-  { ssr: false }
-);
-
-const C = {
-  surface: 'rgba(255, 255, 255, 0.03)',
-  gold: '#dea001',
-  text: '#ffffff',
-  muted: '#7a8fa6',
-  border: 'rgba(222, 160, 1, 0.1)',
-} as const;
+import { C } from '../../utils/theme';
 
 type NetworkUI = 'Mainnet' | 'Devnet' | 'Testnet';
 
@@ -36,9 +25,10 @@ export const SettingsView: FC<SettingsViewProps> = ({
   setAutoConnect,
   onDisconnect,
 }) => {
+  const { copy } = useCopyToClipboard();
+
   const handleCopy = () => {
-    navigator.clipboard.writeText(publicKeyStr);
-    notify({ type: 'success', message: 'Address copied!' });
+    copy(publicKeyStr, 'Address copied!');
   };
 
   return (
@@ -60,12 +50,12 @@ export const SettingsView: FC<SettingsViewProps> = ({
           </button>
 
           <div className="border-b border-[#dea001]/10">
-            <WalletMultiButtonDynamic
+            <WalletButton
               className="!w-full !flex !items-center !justify-start !gap-3 !p-4 !bg-transparent !border-none !text-white !cursor-pointer hover:!bg-white/[0.02] !transition-colors !rounded-none !h-auto !text-[15px] !font-semibold !shadow-none"
             >
               <RefreshCcw size={18} className="text-[#7a8fa6]" />
               <span>Change wallet</span>
-            </WalletMultiButtonDynamic>
+            </WalletButton>
           </div>
 
           <button

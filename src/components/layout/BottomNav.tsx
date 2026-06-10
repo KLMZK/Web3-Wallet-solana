@@ -2,12 +2,7 @@ import { FC } from 'react';
 import { Home, BarChart2, History, Settings } from 'lucide-react';
 import { Tab } from './Sidebar';
 
-const C = {
-  bg: '#10131c',
-  gold: '#dea001',
-  muted: '#7a8fa6',
-  border: 'rgba(222, 160, 1, 0.1)',
-} as const;
+import { C } from '../../utils/theme';
 
 interface BottomNavProps {
   active: Tab;
