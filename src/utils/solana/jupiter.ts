@@ -54,10 +54,22 @@ export async function getJupiterQuote(
   // 1. Convert human-readable amount to minimum units
   const amountInMinUnits = Math.floor(amount * Math.pow(10, inputDecimals));
 
-  // 2. Build the URL with the GET parameters required by Jupiter
-  const url = `https://quote-api.jup.ag/v6/quote?inputMint=${inputMint}&outputMint=${outputMint}&amount=${amountInMinUnits}&slippageBps=${slippageBps}`;
+  // 2. Try the official Jupiter API first
+  try {
+    const url = `https://quote-api.jup.ag/v6/quote?inputMint=${inputMint}&outputMint=${outputMint}&amount=${amountInMinUnits}&slippageBps=${slippageBps}`;
+    const response = await fetch(url);
+    if (response.ok) {
+      const data = await response.json();
+      if (!data.error) {
+        return data as JupiterQuoteResponse;
+      }
+    }
+  } catch (err) {
+    console.warn('Official Jupiter quote API failed (possibly due to DNS block), trying QuickNode mirror...', err);
+  }
 
-  // 3. Make the API request
+  // 3. Fallback to the QuickNode public mirror (limited token support: SOL, USDC, USDT)
+  const url = `https://public.jupiterapi.com/quote?inputMint=${inputMint}&outputMint=${outputMint}&amount=${amountInMinUnits}&slippageBps=${slippageBps}`;
   const response = await fetch(url);
   if (!response.ok) {
       const errorText = await response.text();
@@ -93,7 +105,7 @@ const FALLBACK_TOKENS: JupiterToken[] = [
     address: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
     chainId: 101,
     decimals: 6,
-    name: 'USDT',
+    name: 'Tether USD',
     symbol: 'USDT',
     logoURI: ''
   }
@@ -124,15 +136,31 @@ export async function getJupiterSwapTransaction(
   quoteResponse: JupiterQuoteResponse,
   userPublicKey: string
 ): Promise<string | null> {
-  const url = 'https://quote-api.jup.ag/v6/swap';
-  
-  // The API requires the quote, the user's wallet, and we enable automatic wrapping of SOL to wSOL
   const body = {
     quoteResponse,
     userPublicKey,
     wrapAndUnwrapSol: true,
   };
 
+  // 1. Try the official Jupiter API first
+  try {
+    const response = await fetch('https://quote-api.jup.ag/v6/swap', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (response.ok) {
+      const data = await response.json();
+      if (data.swapTransaction) {
+        return data.swapTransaction as string;
+      }
+    }
+  } catch (err) {
+    console.warn('Official Jupiter swap API failed, trying QuickNode mirror...', err);
+  }
+
+  // 2. Fallback to the QuickNode public mirror
+  const url = 'https://public.jupiterapi.com/swap';
   try {
     const response = await fetch(url, {
       method: 'POST',
