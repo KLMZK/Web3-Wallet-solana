@@ -47,6 +47,7 @@ export const HomeView: FC = () => {
   const [loadingTokens, setLoadingTokens] = useState(false);
   const [solPrice, setSolPrice] = useState<number | null>(null);
   const [sendModalOpen, setSendModalOpen] = useState(false);
+  const [swapModalOpen, setSwapModalOpen] = useState(false);
 
   // Map networkConfiguration hook value to UI label
   const networkUI: NetworkUI =
@@ -196,11 +197,8 @@ export const HomeView: FC = () => {
           loadingTokens={loadingTokens}
           setActiveTab={setActiveTab}
           onSendClick={() => setSendModalOpen(true)}
+          onSwapClick={() => setSwapModalOpen(true)}
         />
-      )}
-
-      {activeTab === 'market' && (
-        <MarketSwapView solBalance={balance} />
       )}
 
       {activeTab === 'history' && (
@@ -222,6 +220,7 @@ export const HomeView: FC = () => {
       )}
     </DashboardLayout>
       <SendModal isOpen={sendModalOpen} onClose={() => setSendModalOpen(false)} />
+      <MarketSwapView isOpen={swapModalOpen} onClose={() => setSwapModalOpen(false)} solBalance={balance} />
     </>
   );
 };
