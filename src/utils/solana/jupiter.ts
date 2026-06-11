@@ -63,8 +63,23 @@ export async function getJupiterQuote(
       if (!data.error) {
         return data as JupiterQuoteResponse;
       }
+    } else {
+      // If the response is not OK (e.g. status 400), check if it's a "no route found" error
+      try {
+        const errData = await response.json();
+        if (errData.errorCode === 'COULD_NOT_FIND_ANY_ROUTE' || errData.message?.toLowerCase().includes('route')) {
+          throw new Error('COULD_NOT_FIND_ANY_ROUTE');
+        }
+      } catch (e) {
+        if (e instanceof Error && e.message === 'COULD_NOT_FIND_ANY_ROUTE') {
+          throw e;
+        }
+      }
     }
   } catch (err) {
+    if (err instanceof Error && err.message === 'COULD_NOT_FIND_ANY_ROUTE') {
+      throw err;
+    }
     console.warn('Official Jupiter quote API failed (possibly due to DNS block), trying QuickNode mirror...', err);
   }
 
@@ -73,11 +88,17 @@ export async function getJupiterQuote(
   const response = await fetch(url);
   if (!response.ok) {
       const errorText = await response.text();
+      if (errorText.includes('COULD_NOT_FIND_ANY_ROUTE') || errorText.toLowerCase().includes('route')) {
+        throw new Error('COULD_NOT_FIND_ANY_ROUTE');
+      }
       throw new Error(`Jupiter Quote Error: ${errorText}`);
   }
   const data = await response.json();
   
   if (data.error) {
+      if (data.error.includes('COULD_NOT_FIND_ANY_ROUTE') || data.error.toLowerCase().includes('route')) {
+        throw new Error('COULD_NOT_FIND_ANY_ROUTE');
+      }
       throw new Error(data.error);
   }
   
