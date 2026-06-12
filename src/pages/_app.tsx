@@ -8,7 +8,7 @@
 
 import { AppProps } from 'next/app';
 import Head from 'next/head';
-import { FC } from 'react';
+import { FC, useEffect } from 'react';
 import { ContextProvider } from '../contexts/ContextProvider';
 import Notifications from '../components/Notification';
 
@@ -16,6 +16,16 @@ require('@solana/wallet-adapter-react-ui/styles.css');
 require('../styles/globals.css');
 
 const App: FC<AppProps> = ({ Component, pageProps }) => {
+  useEffect(() => {
+    if (
+      typeof window !== 'undefined' &&
+      window.location.protocol === 'http:' &&
+      !['localhost', '127.0.0.1'].includes(window.location.hostname)
+    ) {
+      window.location.href = window.location.href.replace('http:', 'https:');
+    }
+  }, []);
+
   return (
     <>
       <Head>
