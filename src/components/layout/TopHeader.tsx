@@ -1,5 +1,4 @@
 import { FC, useState, useEffect, useRef } from 'react';
-import dynamic from 'next/dynamic';
 import {
   Search,
   ChevronDown,
@@ -10,23 +9,10 @@ import {
 } from 'lucide-react';
 import HexLogo from '../ui/HexLogo';
 import Toggle from '../ui/Toggle';
-import { notify } from '../../utils/notifications';
+import { useCopyToClipboard } from '../../hooks/useCopyToClipboard';
+import WalletButton from '../ui/WalletButton';
 
-const WalletMultiButtonDynamic = dynamic(
-  async () => (await import('@solana/wallet-adapter-react-ui')).WalletMultiButton,
-  { ssr: false }
-);
-
-const C = {
-  bg: '#10131c',
-  surface: 'rgba(255, 255, 255, 0.03)',
-  surfaceSolid: '#181c27',
-  gold: '#dea001',
-  text: '#ffffff',
-  muted: '#7a8fa6',
-  red: '#ff4a4a',
-  border: 'rgba(222, 160, 1, 0.1)',
-} as const;
+import { C } from '../../utils/theme';
 
 type NetworkUI = 'Mainnet' | 'Devnet' | 'Testnet';
 
@@ -54,6 +40,7 @@ const TopHeader: FC<TopHeaderProps> = ({
   const [walletOpen, setWalletOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const { copy } = useCopyToClipboard();
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -68,8 +55,7 @@ const TopHeader: FC<TopHeaderProps> = ({
   }, []);
 
   const handleCopyAddress = () => {
-    navigator.clipboard.writeText(publicKeyStr);
-    notify({ type: 'success', message: 'Address copied!' });
+    copy(publicKeyStr, 'Address copied!');
     setWalletOpen(false);
   };
 
@@ -135,12 +121,12 @@ const TopHeader: FC<TopHeaderProps> = ({
               </button>
 
               {/* Change wallet — opens the wallet adapter modal */}
-              <WalletMultiButtonDynamic
+              <WalletButton
                 className="!flex !items-center !gap-2.5 !px-3 !py-2.5 !rounded-lg !bg-transparent !border-none !text-white !cursor-pointer hover:!bg-white/5 !text-[13px] !font-medium !text-left !shadow-none !h-auto !justify-start"
               >
                 <RefreshCcw size={16} className="text-[#7a8fa6]" />
                 <span>Change wallet</span>
-              </WalletMultiButtonDynamic>
+              </WalletButton>
 
               <div className="h-[1px] my-1" style={{ backgroundColor: C.border }} />
 

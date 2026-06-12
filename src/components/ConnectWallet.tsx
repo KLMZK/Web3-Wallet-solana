@@ -1,11 +1,6 @@
 import { FC } from 'react';
-import dynamic from 'next/dynamic';
 import HexLogo from './ui/HexLogo';
-
-const WalletMultiButtonDynamic = dynamic(
-  async () => (await import('@solana/wallet-adapter-react-ui')).WalletMultiButton,
-  { ssr: false }
-);
+import WalletButton from './ui/WalletButton';
 
 const ConnectWallet: FC = () => {
   return (
@@ -21,11 +16,11 @@ const ConnectWallet: FC = () => {
       </h1>
 
       {/* Connect Button — opens wallet adapter modal */}
-      <WalletMultiButtonDynamic
+      <WalletButton
         className="!w-full !max-w-[360px] !bg-[#dea001] !text-[#10131c] !border-none !rounded-2xl !py-4 !text-lg !font-extrabold !cursor-pointer hover:!brightness-110 !transition-all !shadow-none !h-auto !justify-center"
       >
         Connect Wallet
-      </WalletMultiButtonDynamic>
+      </WalletButton>
     </div>
   );
 };

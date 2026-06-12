@@ -1,13 +1,8 @@
 import { FC } from 'react';
-import { Home, BarChart2, ArrowUpRight, Settings } from 'lucide-react';
+import { Home, BarChart2, History, Settings } from 'lucide-react';
 import { Tab } from './Sidebar';
 
-const C = {
-  bg: '#10131c',
-  gold: '#dea001',
-  muted: '#7a8fa6',
-  border: 'rgba(222, 160, 1, 0.1)',
-} as const;
+import { C } from '../../utils/theme';
 
 interface BottomNavProps {
   active: Tab;
@@ -18,7 +13,7 @@ const BottomNav: FC<BottomNavProps> = ({ active, onChange }) => {
   const tabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
     { key: 'home',     label: 'Home',     icon: <Home size={24} /> },
     { key: 'market',   label: 'Market',   icon: <BarChart2 size={24} /> },
-    { key: 'send',     label: 'Send',     icon: <ArrowUpRight size={24} /> },
+    { key: 'history',  label: 'History',  icon: <History size={24} /> },
     { key: 'settings', label: 'Settings', icon: <Settings size={24} /> },
   ];
 

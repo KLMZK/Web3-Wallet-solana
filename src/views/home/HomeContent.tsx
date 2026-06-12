@@ -8,14 +8,7 @@ import {
 import SkeletonRow from '../../components/ui/SkeletonRow';
 import { Tab } from '../../components/layout/Sidebar';
 
-const C = {
-  surface: 'rgba(255, 255, 255, 0.03)',
-  gold: '#dea001',
-  text: '#ffffff',
-  muted: '#7a8fa6',
-  green: '#4ade80',
-  border: 'rgba(222, 160, 1, 0.1)',
-} as const;
+import { C } from '../../utils/theme';
 
 // Token brand colors for known SPL token symbols
 const TOKEN_COLORS: Record<string, string> = {
@@ -46,6 +39,7 @@ interface HomeContentProps {
   splTokens: SPLToken[];
   loadingTokens: boolean;
   setActiveTab: (t: Tab) => void;
+  onSendClick: () => void;
 }
 
 export const HomeContent: FC<HomeContentProps> = ({
@@ -54,6 +48,7 @@ export const HomeContent: FC<HomeContentProps> = ({
   splTokens,
   loadingTokens,
   setActiveTab,
+  onSendClick,
 }) => {
   const fiatValue = solPrice ? (balance * solPrice).toFixed(2) : '0.00';
 
@@ -101,7 +96,7 @@ export const HomeContent: FC<HomeContentProps> = ({
             {
               label: 'Send',
               icon: <ArrowUpRight size={20} className="text-[#dea001]" />,
-              onClick: () => setActiveTab('send'),
+              onClick: onSendClick,
             },
             {
               label: 'Receive',
