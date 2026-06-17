@@ -92,7 +92,7 @@ export const TransactionRow: FC<TransactionRowProps> = ({
             {isReceived ? 'Received' : isFailed ? 'Failed' : 'Sent'}
           </p>
           <p className="text-[#7a8fa6] text-[13px]">
-            from {isReceived ? addressLabel : addressLabel}
+            {isFailed ? 'Error:' : isReceived ? 'from' : 'to'} {addressLabel}
           </p>
         </div>
 

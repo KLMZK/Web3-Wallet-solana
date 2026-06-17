@@ -106,7 +106,10 @@ export function useTransactionHistory(
         const parsedTxs = await Promise.all(
           signatures.map(async (sig) => {
             try {
-              const tx = await connection.getParsedTransaction(sig.signature, 'confirmed');
+              const tx = await connection.getParsedTransaction(sig.signature, {
+                maxSupportedTransactionVersion: 0,
+                commitment: 'confirmed'
+              });
 
               if (!tx) {
                 // Fallback: if transaction can't be parsed, return a minimal entry
