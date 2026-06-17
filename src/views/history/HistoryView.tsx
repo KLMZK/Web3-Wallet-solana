@@ -21,7 +21,7 @@ import { AlertCircle, Loader } from 'lucide-react';
 import { useTransactionHistory, ParsedTransaction } from '../../hooks/useTransactionHistory';
 import { getExplorerUrl } from '../../utils/explorer';
 import { C } from '../../utils/theme';
-import { isValidBase58Address } from '../../utils/security';
+import { isValidBase58Address, sanitizeInput } from '../../utils/security';
 
 // Sub-components (will be created next)
 import { HistoryFilters } from './HistoryFilters';
@@ -177,10 +177,11 @@ export const HistoryView: FC = () => {
   // ─────────────────────────────────────────────────────────────────────────
 
   const isSearchActive = searchAddress.trim().length > 0;
-  const isSearchValid = !isSearchActive || isValidBase58Address(searchAddress);
+  const sanitizedSearch = sanitizeInput(searchAddress);
+  const isSearchValid = !isSearchActive || isValidBase58Address(sanitizedSearch);
 
   const filteredTransactions = isSearchValid
-    ? filterTransactions(transactions, filterType, searchAddress)
+    ? filterTransactions(transactions, filterType, sanitizedSearch)
     : [];
   const groupedTransactions = groupByDate(filteredTransactions);
 
