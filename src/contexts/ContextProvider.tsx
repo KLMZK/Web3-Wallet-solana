@@ -20,10 +20,21 @@ const WalletContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
     const { autoConnect } = useAutoConnect();
     const { networkConfiguration } = useNetworkConfiguration();
     const network = networkConfiguration as WalletAdapterNetwork;
+
+    // ── RPC Endpoint Resolution ───────────────────────────────────────────────
+    // Priority: Helius private RPC (from .env.local) → public clusterApiUrl fallback.
+    // Helius endpoints provide dedicated rate limits, preventing 429 errors.
     const endpoint = useMemo(() => {
         if (networkConfiguration === 'localnet') {
             return 'http://127.0.0.1:8899';
         }
+        if (networkConfiguration === 'mainnet-beta') {
+            return process.env.NEXT_PUBLIC_MAINNET_RPC_URL || clusterApiUrl('mainnet-beta');
+        }
+        if (networkConfiguration === 'devnet') {
+            return process.env.NEXT_PUBLIC_DEVNET_RPC_URL || clusterApiUrl('devnet');
+        }
+        // Testnet or any unknown network: fall back to clusterApiUrl
         return clusterApiUrl(network);
     }, [network, networkConfiguration]);
 
