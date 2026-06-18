@@ -12,7 +12,7 @@
 // Returns a transaction array with parsed data ready for UI consumption.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { Connection, PublicKey, ConfirmedSignatureInfo } from '@solana/web3.js';
 import { notify } from '../utils/notifications';
 import { handleError } from '../utils/errorHandler';
@@ -118,7 +118,10 @@ export function useTransactionHistory(
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
-  const [lastSignature, setLastSignature] = useState<string | null>(null);
+  // useRef instead of useState: the callback always reads the latest value
+  // without needing to be in the useCallback dependency array, which would
+  // recreate fetchTransactions on every page load → infinite fetch loop.
+  const lastSignatureRef = useRef<string | null>(null);
 
   // ───────────────────────────────────────────────────────────────────────
   // Fetch transaction signatures (initial or paginated)
@@ -139,7 +142,7 @@ export function useTransactionHistory(
         // limit: 25 per request (default), before: for pagination
         const signatures = await connection.getSignaturesForAddress(publicKey, {
           limit: 25,
-          before: isLoadMore ? lastSignature : undefined,
+          before: isLoadMore ? lastSignatureRef.current : undefined,
         });
 
         if (signatures.length === 0) {
@@ -270,7 +273,7 @@ export function useTransactionHistory(
         if (signatures.length < 25) {
           setHasMore(false);
         } else {
-          setLastSignature(signatures[signatures.length - 1].signature);
+          lastSignatureRef.current = signatures[signatures.length - 1].signature;
         }
       } catch (err) {
         const walletError = handleError(err, 'useTransactionHistory');
@@ -289,13 +292,13 @@ export function useTransactionHistory(
   useEffect(() => {
     if (!publicKey) {
       setTransactions([]);
-      setLastSignature(null);
+      lastSignatureRef.current = null;
       setHasMore(true);
       return;
     }
 
     // Reset pagination on wallet change
-    setLastSignature(null);
+    lastSignatureRef.current = null;
     setHasMore(true);
 
     // Fetch initial transactions
