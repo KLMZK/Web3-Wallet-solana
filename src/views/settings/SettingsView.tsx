@@ -1,10 +1,11 @@
-import { FC } from 'react';
-import { Copy, RefreshCcw, LogOut } from 'lucide-react';
+import { FC, useState, useEffect } from 'react';
+import { Copy, RefreshCcw, LogOut, Shield, Trash2, CheckCircle, Settings, AlertTriangle } from 'lucide-react';
 import Toggle from '../../components/ui/Toggle';
 import { useCopyToClipboard } from '../../hooks/useCopyToClipboard';
 import WalletButton from '../../components/ui/WalletButton';
 
 import { C } from '../../utils/theme';
+import { getAuditEvents, clearAuditEvents, logAuditEvent, AuditEvent } from '../../utils/security/auditLogger';
 
 type NetworkUI = 'Mainnet' | 'Devnet' | 'Testnet';
 
@@ -26,9 +27,41 @@ export const SettingsView: FC<SettingsViewProps> = ({
   onDisconnect,
 }) => {
   const { copy } = useCopyToClipboard();
+  const [logs, setLogs] = useState<AuditEvent[]>([]);
+
+  useEffect(() => {
+    setLogs(getAuditEvents());
+    const refresh = () => setLogs(getAuditEvents());
+    window.addEventListener('xpectre_audit_log_added', refresh);
+    return () => window.removeEventListener('xpectre_audit_log_added', refresh);
+  }, []);
 
   const handleCopy = () => {
     copy(publicKeyStr, 'Address copied!');
+    logAuditEvent('security', 'address_copied', 'Wallet address copied to clipboard');
+  };
+
+  const handleNetworkChange = (net: NetworkUI) => {
+    if (net !== networkUI) {
+      logAuditEvent('settings', 'network_changed', `Changed network from ${networkUI} to ${net}`);
+      setNetworkUI(net);
+    }
+  };
+
+  const handleAutoConnectChange = () => {
+    const nextVal = !autoConnect;
+    logAuditEvent('settings', 'autoconnect_toggled', `Toggled Auto-connect to ${nextVal ? 'ON' : 'OFF'}`);
+    setAutoConnect(nextVal);
+  };
+
+  const handleDisconnect = () => {
+    logAuditEvent('security', 'wallet_disconnected', 'Wallet disconnected by user');
+    onDisconnect();
+  };
+
+  const handleClearLogs = () => {
+    clearAuditEvents();
+    logAuditEvent('security', 'audit_logs_cleared', 'Security audit logs cleared by user');
   };
 
   return (
@@ -59,7 +92,7 @@ export const SettingsView: FC<SettingsViewProps> = ({
           </div>
 
           <button
-            onClick={onDisconnect}
+            onClick={handleDisconnect}
             className="w-full flex items-center justify-between p-4 bg-transparent border-none text-[#ff4a4a] cursor-pointer hover:bg-[#ff4a4a]/5 transition-colors"
           >
             <span className="flex items-center gap-3 text-[15px] font-semibold">
@@ -80,7 +113,7 @@ export const SettingsView: FC<SettingsViewProps> = ({
             {(['Mainnet', 'Devnet', 'Testnet'] as NetworkUI[]).map((net) => (
               <button
                 key={net}
-                onClick={() => setNetworkUI(net)}
+                onClick={() => handleNetworkChange(net)}
                 className="flex-1 py-3 rounded-xl font-bold text-[14px] cursor-pointer border transition-colors"
                 style={{
                   backgroundColor: networkUI === net ? C.gold : 'transparent',
@@ -108,7 +141,73 @@ export const SettingsView: FC<SettingsViewProps> = ({
               Automatically reconnect wallet on page reload
             </p>
           </div>
-          <Toggle checked={autoConnect} onChange={() => setAutoConnect(!autoConnect)} />
+          <Toggle checked={autoConnect} onChange={handleAutoConnectChange} />
+        </div>
+      </div>
+
+      {/* Security Audit Logs */}
+      <div>
+        <div className="flex items-center justify-between mb-4 px-1">
+          <h2 className="text-white text-lg font-bold tracking-wide flex items-center gap-2">
+            <Shield size={20} className="text-[#dea001]" /> Security Audit Logs
+          </h2>
+          {logs.length > 0 && (
+            <button
+              onClick={handleClearLogs}
+              className="flex items-center gap-1.5 text-xs font-bold text-[#ff4a4a] bg-transparent border-none cursor-pointer hover:underline"
+            >
+              <Trash2 size={14} /> Clear logs
+            </button>
+          )}
+        </div>
+        <div
+          className="rounded-2xl border overflow-hidden p-4 flex flex-col gap-3"
+          style={{
+            backgroundColor: C.surface,
+            borderColor: C.border,
+            maxHeight: '260px',
+            overflowY: 'auto'
+          }}
+        >
+          {logs.length === 0 ? (
+            <div className="text-center py-6 text-[#7a8fa6] text-[13px]">
+              No security events recorded yet.
+            </div>
+          ) : (
+            logs.map((log) => {
+              const dateStr = new Date(log.timestamp).toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+              });
+
+              return (
+                <div
+                  key={log.id}
+                  className="flex items-start justify-between gap-4 p-3 rounded-xl bg-black/15 border border-white/[0.02]"
+                >
+                  <div className="flex items-start gap-3">
+                    <span className="mt-0.5 shrink-0">
+                      {log.category === 'security' && <AlertTriangle size={15} className="text-[#ff4a4a]" />}
+                      {log.category === 'transaction' && <CheckCircle size={15} className="text-[#4ade80]" />}
+                      {log.category === 'settings' && <Settings size={15} className="text-[#dea001]" />}
+                    </span>
+                    <div>
+                      <p className="text-white text-[13px] font-medium leading-relaxed">
+                        {log.details}
+                      </p>
+                      <span className="text-[10px] text-[#7a8fa6] mt-1 block font-mono">
+                        Action: {log.action}
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-[10px] text-[#7a8fa6] font-mono whitespace-nowrap pt-0.5">
+                    {dateStr}
+                  </span>
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
 
