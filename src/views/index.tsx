@@ -1,2 +1,3 @@
 export { HomeView } from "./home";
-export { BasicsView } from "./basics";
+export { MarketSwapView } from "./market/MarketSwapView";
+export { SettingsView } from "./settings/SettingsView";

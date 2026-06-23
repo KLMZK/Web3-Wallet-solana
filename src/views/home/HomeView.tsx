@@ -2,7 +2,7 @@ import { FC, useEffect, useState, useCallback } from 'react';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { HistoryView } from '../history/HistoryView';
-
+https://github.com/XpectreLabs/Web3-Wallet-solana/pull/21/conflict?name=src%252Fviews%252Fhome%252FHomeView.tsx&base_oid=600fb0bd99aa3f56d9efecf81bccb34d0fe7f3ac&head_oid=0c4657051a05c2511e0258380a40ec7d9ee33abe
 // Scaffold hooks (unmodified)
 import useUserSOLBalanceStore from '../../stores/useUserSOLBalanceStore';
 import { notify } from '../../utils/notifications';

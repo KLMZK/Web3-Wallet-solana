@@ -3,15 +3,21 @@ import Document, { DocumentContext, Head, Html, Main, NextScript } from 'next/do
 class MyDocument extends Document {
   static async getInitialProps(ctx: DocumentContext) {
     const initialProps = await Document.getInitialProps(ctx)
-
     return initialProps
   }
 
   render() {
     return (
-      <Html>
+      <Html data-theme="solana">
         <Head>
-        <link rel="shortcut icon" href="/favicon.ico"/>
+          <link rel="shortcut icon" href="/favicon.ico" />
+          {/* Inter font from Google Fonts */}
+          <link rel="preconnect" href="https://fonts.googleapis.com" />
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+          <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+            rel="stylesheet"
+          />
         </Head>
         <body>
           <Main />
