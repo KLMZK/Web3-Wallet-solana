@@ -40,6 +40,7 @@ interface HomeContentProps {
   loadingTokens: boolean;
   setActiveTab: (t: Tab) => void;
   onSendClick: () => void;
+  onSwapClick: () => void;
 }
 
 export const HomeContent: FC<HomeContentProps> = ({
@@ -49,6 +50,7 @@ export const HomeContent: FC<HomeContentProps> = ({
   loadingTokens,
   setActiveTab,
   onSendClick,
+  onSwapClick,
 }) => {
   const fiatValue = solPrice ? (balance * solPrice).toFixed(2) : '0.00';
 
@@ -91,7 +93,7 @@ export const HomeContent: FC<HomeContentProps> = ({
             {
               label: 'Swap',
               icon: <ArrowLeftRight size={20} className="text-[#dea001]" />,
-              onClick: () => setActiveTab('market'),
+              onClick: onSwapClick,
             },
             {
               label: 'Send',

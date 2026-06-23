@@ -1,10 +1,10 @@
 import { FC } from 'react';
-import { Home, BarChart2, History, Settings } from 'lucide-react';
+import { Home, History, Settings } from 'lucide-react';
 import HexLogo from '../ui/HexLogo';
 
 import { C } from '../../utils/theme';
 
-export type Tab = 'home' | 'market' | 'history' | 'settings';
+export type Tab = 'home' | 'history' | 'settings';
 
 interface SidebarProps {
   active: Tab;
@@ -14,7 +14,6 @@ interface SidebarProps {
 const Sidebar: FC<SidebarProps> = ({ active, onChange }) => {
   const tabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
     { key: 'home',     label: 'Home',     icon: <Home size={20} /> },
-    { key: 'market',   label: 'Market',   icon: <BarChart2 size={20} /> },
     { key: 'history',  label: 'History',  icon: <History size={20} /> },
     { key: 'settings', label: 'Settings', icon: <Settings size={20} /> },
   ];

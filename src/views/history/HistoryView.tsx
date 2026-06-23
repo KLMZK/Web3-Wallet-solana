@@ -322,7 +322,7 @@ export const HistoryView: FC = () => {
       {!hasMore && filteredTransactions.length > 0 && (
         <div className="text-center py-8">
           <p className="text-[#7a8fa6] text-[14px]">
-            You've reached the end of your transaction history
+            You&apos;ve reached the end of your transaction history
           </p>
         </div>
       )}
