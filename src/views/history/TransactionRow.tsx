@@ -37,9 +37,9 @@ export const TransactionRow: FC<TransactionRowProps> = ({
     ? 'rgba(74, 222, 128, 0.1)'
     : isFailed
       ? 'rgba(255, 74, 74, 0.1)'
-      : 'rgba(255, 74, 74, 0.1)';
+      : 'rgba(255, 255, 255, 0.1)';
 
-  const iconColor = isReceived ? C.green : C.red;
+  const iconColor = isReceived ? C.green : isFailed ? C.red : '#ffffff';
 
   const icon = isReceived ? (
     <ArrowDownLeft size={18} />

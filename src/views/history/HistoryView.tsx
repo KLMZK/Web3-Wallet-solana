@@ -178,11 +178,9 @@ export const HistoryView: FC<{ initialSearch?: string }> = ({ initialSearch = ''
 
   const isSearchActive = searchAddress.trim().length > 0;
   const sanitizedSearch = sanitizeInput(searchAddress);
-  const isSearchValid = !isSearchActive || isValidBase58Address(sanitizedSearch);
-
-  const filteredTransactions = isSearchValid
-    ? filterTransactions(transactions, filterType, sanitizedSearch)
-    : [];
+  
+  // Removed strict Base58 validation to allow partial matching
+  const filteredTransactions = filterTransactions(transactions, filterType, sanitizedSearch);
   const groupedTransactions = groupByDate(filteredTransactions);
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -239,21 +237,7 @@ export const HistoryView: FC<{ initialSearch?: string }> = ({ initialSearch = ''
         </div>
       )}
 
-      {/* Search not possible warning */}
-      {isSearchActive && !isSearchValid && (
-        <div
-          className="rounded-2xl p-6 flex items-start gap-4 mb-8"
-          style={{ backgroundColor: C.surface, border: `1px solid ${C.gold}40` }}
-        >
-          <AlertCircle size={20} className="text-[#dea001] mt-1 shrink-0" />
-          <div>
-            <p className="text-white font-semibold mb-1">Búsqueda no posible</p>
-            <p className="text-[#7a8fa6] text-[14px]">
-              La dirección ingresada no tiene el formato de una dirección de Solana válida (Base58 entre 32 y 44 caracteres).
-            </p>
-          </div>
-        </div>
-      )}
+
 
       {/* Loading state (initial) */}
       {loading && transactions.length === 0 && (
