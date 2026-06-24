@@ -15,9 +15,9 @@ import { FC } from 'react';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import { ArrowUpRight, ArrowDownLeft, Loader, AlertCircle } from 'lucide-react';
 
-import { useRecentTransactions, RecentTransaction } from '../../hooks/useRecentTransactions';
-import { getExplorerUrl } from '../../utils/explorer';
-import { C } from '../../utils/theme';
+import { useRecentTransactions, RecentTransaction } from '../hooks/useRecentTransactions';
+import { getExplorerUrl } from '../utils/explorer';
+import { C } from '../utils/theme';
 
 interface RecentActivityProps {
   onViewMoreClick: () => void; // Callback to switch to History tab
