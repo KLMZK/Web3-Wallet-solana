@@ -42,3 +42,5 @@ yarn-error.log*
 # solana keypairs & test scripts (NEVER upload private keys)
 /scripts/
 *.json.bak
+
+*.env.local

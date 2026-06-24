@@ -21,6 +21,7 @@ import ConnectWallet from '../../components/ConnectWallet';
 import { HomeContent, SPLToken, tokenColor } from './HomeContent';
 import { MarketSwapView } from '../market/MarketSwapView';
 import { SendModal } from '../send/SendModal';
+import { ReceiveModal } from '../receive/ReceiveModal';
 import { SettingsView } from '../settings/SettingsView';
 
 /* ─────────────────────────────────────────────
@@ -52,6 +53,7 @@ export const HomeView: FC = () => {
   const [solPrice, setSolPrice] = useState<number | null>(null);
   const [sendModalOpen, setSendModalOpen] = useState(false);
   const [swapModalOpen, setSwapModalOpen] = useState(false);
+  const [receiveModalOpen, setReceiveModalOpen] = useState(false);
 
   // Map networkConfiguration hook value to UI label
   const networkUI: NetworkUI =
@@ -202,6 +204,7 @@ export const HomeView: FC = () => {
             setActiveTab={setActiveTab}
             onSendClick={() => setSendModalOpen(true)}
             onSwapClick={() => setSwapModalOpen(true)}
+            onReceiveClick={() => setReceiveModalOpen(true)}
           />
         )}
 
@@ -222,6 +225,7 @@ export const HomeView: FC = () => {
       </DashboardLayout>
       <SendModal isOpen={sendModalOpen} onClose={() => setSendModalOpen(false)} />
       <MarketSwapView isOpen={swapModalOpen} onClose={() => setSwapModalOpen(false)} solBalance={balance} />
+      <ReceiveModal isOpen={receiveModalOpen} onClose={() => setReceiveModalOpen(false)} />
     </>
   );
 };

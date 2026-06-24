@@ -40,6 +40,7 @@ interface HomeContentProps {
   setActiveTab: (t: Tab) => void;
   onSendClick: () => void;
   onSwapClick: () => void;
+  onReceiveClick: () => void;
 }
 
 export const HomeContent: FC<HomeContentProps> = ({
@@ -49,6 +50,7 @@ export const HomeContent: FC<HomeContentProps> = ({
   loadingTokens,
   onSendClick,
   onSwapClick,
+  onReceiveClick,
 }) => {
   const fiatValue = solPrice ? (balance * solPrice).toFixed(2) : '0.00';
 
@@ -101,7 +103,7 @@ export const HomeContent: FC<HomeContentProps> = ({
             {
               label: 'Receive',
               icon: <ArrowDownLeft size={20} className="text-[#dea001]" />,
-              onClick: () => {},
+              onClick: onReceiveClick,
             },
           ].map((a) => (
             <button
