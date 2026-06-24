@@ -46,7 +46,24 @@ export const HomeView: FC = () => {
   const { autoConnect, setAutoConnect } = useAutoConnect();
 
   // ── UI state ──────────────────────────────
-  const [activeTab, setActiveTab] = useState<Tab>('home');
+  const [activeTabState, setActiveTabState] = useState<Tab>('home');
+  const [lastTabChange, setLastTabChange] = useState<number>(0);
+  const [globalSearch, setGlobalSearch] = useState('');
+
+  const setActiveTab = useCallback(
+    (tab: Tab) => {
+      const now = Date.now();
+      if (now - lastTabChange < 800) return; // 800ms cooldown to avoid API spam
+      setLastTabChange(now);
+      setActiveTabState(tab);
+    },
+    [lastTabChange]
+  );
+  
+  const handleGlobalSearch = useCallback((query: string) => {
+    setGlobalSearch(query);
+    setActiveTab('history');
+  }, [setActiveTab]);
   const [splTokens, setSplTokens] = useState<SPLToken[]>([]);
   const [loadingTokens, setLoadingTokens] = useState(false);
   const [solPrice, setSolPrice] = useState<number | null>(null);
@@ -184,7 +201,7 @@ export const HomeView: FC = () => {
   return (
     <>
       <DashboardLayout
-        activeTab={activeTab}
+        activeTab={activeTabState}
         setActiveTab={setActiveTab}
         publicKeyStr={publicKeyStr}
         networkUI={networkUI}
@@ -192,8 +209,9 @@ export const HomeView: FC = () => {
         autoConnect={autoConnect}
         setAutoConnect={setAutoConnect}
         onDisconnect={handleDisconnect}
+        onGlobalSearch={handleGlobalSearch}
       >
-        {activeTab === 'home' && (
+        {activeTabState === 'home' && (
           <HomeContent
             balance={balance}
             solPrice={solPrice}
@@ -205,11 +223,11 @@ export const HomeView: FC = () => {
           />
         )}
 
-        {activeTab === 'history' && (
-          <HistoryView />
+        {activeTabState === 'history' && (
+          <HistoryView initialSearch={globalSearch} />
         )}
 
-        {activeTab === 'settings' && (
+        {activeTabState === 'settings' && (
           <SettingsView
             publicKeyStr={publicKeyStr}
             networkUI={networkUI}

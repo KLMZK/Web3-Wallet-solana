@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import SkeletonRow from '../../components/ui/SkeletonRow';
 import { Tab } from '../../components/layout/Sidebar';
+import { RecentActivity } from '../../components/RecentActivity';
 
 import { C } from '../../utils/theme';
 
@@ -211,14 +212,7 @@ export const HomeContent: FC<HomeContentProps> = ({
         <div className="flex justify-between items-end mb-4 px-1">
           <h2 className="text-white text-lg font-bold tracking-wide">Recent Activity</h2>
         </div>
-        <div
-          className="rounded-2xl overflow-hidden"
-          style={{ backgroundColor: C.surface, border: `1px solid ${C.border}` }}
-        >
-          <div className="px-4 py-6 text-center">
-            <p className="text-[#7a8fa6] text-[14px]">No recent activity</p>
-          </div>
-        </div>
+        <RecentActivity onViewMoreClick={() => setActiveTab('history')} />
       </div>
     </div>
   );

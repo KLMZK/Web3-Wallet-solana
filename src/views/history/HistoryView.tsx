@@ -130,7 +130,7 @@ function groupByDate(transactions: ParsedTransaction[]): GroupedTransactions[] {
 // MAIN COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════
 
-export const HistoryView: FC = () => {
+export const HistoryView: FC<{ initialSearch?: string }> = ({ initialSearch = '' }) => {
   const { publicKey } = useWallet();
   const { connection } = useConnection();
 
@@ -142,7 +142,7 @@ export const HistoryView: FC = () => {
 
   // UI state for filters and search
   const [filterType, setFilterType] = useState<FilterType>('all');
-  const [searchAddress, setSearchAddress] = useState('');
+  const [searchAddress, setSearchAddress] = useState(initialSearch);
 
   // Ref for infinite scroll
   const loadMoreRef = useRef<HTMLDivElement>(null);

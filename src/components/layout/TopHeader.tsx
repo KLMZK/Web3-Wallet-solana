@@ -23,6 +23,7 @@ interface TopHeaderProps {
   autoConnect: boolean;
   setAutoConnect: (v: boolean) => void;
   onDisconnect: () => void;
+  onGlobalSearch?: (query: string) => void;
 }
 
 function truncate(addr: string) {
@@ -36,6 +37,7 @@ const TopHeader: FC<TopHeaderProps> = ({
   autoConnect,
   setAutoConnect,
   onDisconnect,
+  onGlobalSearch,
 }) => {
   const { setVisible } = useWalletModal();
   const [walletOpen, setWalletOpen] = useState(false);
@@ -81,8 +83,17 @@ const TopHeader: FC<TopHeaderProps> = ({
         <label htmlFor="global-search" className="sr-only">Search assets, history</label>
         <input
           id="global-search"
-          placeholder="Search assets, history..."
+          placeholder="Search by wallet address..."
           className="bg-transparent border-none outline-none text-white w-full text-[14px] placeholder:text-[#7a8fa6]"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              const val = e.currentTarget.value.trim();
+              if (val && onGlobalSearch) {
+                onGlobalSearch(val);
+                e.currentTarget.value = '';
+              }
+            }
+          }}
         />
       </div>
 
