@@ -8,16 +8,29 @@ class MyDocument extends Document {
 
   render() {
     return (
-      <Html data-theme="solana">
+      <Html data-theme="solana" lang="en">
         <Head>
           <link rel="shortcut icon" href="/favicon.ico" />
-          {/* Inter font from Google Fonts */}
+          {/* Inter font from Google Fonts (Non-blocking load) */}
           <link rel="preconnect" href="https://fonts.googleapis.com" />
           <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
           <link
+            rel="preload"
+            as="style"
             href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
-            rel="stylesheet"
           />
+          <link
+            rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+            media="print"
+            onLoad="this.media='all'"
+          />
+          <noscript>
+            <link
+              rel="stylesheet"
+              href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+            />
+          </noscript>
         </Head>
         <body>
           <Main />
