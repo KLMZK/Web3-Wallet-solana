@@ -56,6 +56,9 @@ export const HomeView: FC = () => {
       if (now - lastTabChange < 800) return; // 800ms cooldown to avoid API spam
       setLastTabChange(now);
       setActiveTabState(tab);
+      if (tab !== 'history') {
+        setGlobalSearch('');
+      }
     },
     [lastTabChange]
   );
