@@ -140,10 +140,21 @@ export function useTransactionHistory(
       try {
         // Fetch signatures for the wallet
         // limit: 25 per request (default), before: for pagination
-        const signatures = await connection.getSignaturesForAddress(publicKey, {
-          limit: 25,
-          before: isLoadMore ? lastSignatureRef.current : undefined,
-        });
+        let signatures: any[] = [];
+        try {
+          signatures = await connection.getSignaturesForAddress(publicKey, {
+            limit: 25,
+            before: isLoadMore && lastSignatureRef.current ? lastSignatureRef.current : undefined,
+          });
+        } catch (err: any) {
+          if (isLoadMore && err.message?.includes('not found')) {
+            console.warn('[useTransactionHistory] Pagination reference tx dropped by RPC. Stopping pagination.');
+            setHasMore(false);
+            setLoading(false);
+            return;
+          }
+          throw err;
+        }
 
         if (signatures.length === 0) {
           if (!isLoadMore) setTransactions([]);
