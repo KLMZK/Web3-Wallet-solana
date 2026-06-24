@@ -147,7 +147,8 @@ export function useTransactionHistory(
             before: isLoadMore && lastSignatureRef.current ? lastSignatureRef.current : undefined,
           });
         } catch (err: any) {
-          if (isLoadMore && err.message?.includes('not found')) {
+          const errString = String(err?.message || err).toLowerCase();
+          if (isLoadMore && (errString.includes('not found') || errString.includes('failed to get signatures'))) {
             console.warn('[useTransactionHistory] Pagination reference tx dropped by RPC. Stopping pagination.');
             setHasMore(false);
             setLoading(false);
