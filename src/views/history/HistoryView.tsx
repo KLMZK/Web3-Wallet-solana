@@ -261,7 +261,7 @@ export const HistoryView: FC<{ initialSearch?: string }> = ({ initialSearch = ''
       )}
 
       {/* No results after filter */}
-      {!loading && transactions.length > 0 && filteredTransactions.length === 0 && !error && isSearchValid && (
+      {!loading && transactions.length > 0 && filteredTransactions.length === 0 && !error && (
         <div
           className="rounded-2xl p-12 text-center"
           style={{ backgroundColor: C.surface, border: `1px solid ${C.border}` }}

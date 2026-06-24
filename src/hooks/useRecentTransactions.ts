@@ -86,7 +86,10 @@ export function useRecentTransactions(
         const parsedTxs = await Promise.all(
           signatures.map(async (sig) => {
             try {
-              const tx = await connection.getParsedTransaction(sig.signature, 'confirmed');
+              const tx = await connection.getParsedTransaction(sig.signature, {
+                commitment: 'confirmed',
+                maxSupportedTransactionVersion: 0,
+              });
 
               if (!tx) {
                 return {
