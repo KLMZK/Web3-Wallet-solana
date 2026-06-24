@@ -38,7 +38,9 @@ const WalletContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
         return clusterApiUrl(network);
     }, [network, networkConfiguration]);
 
-    console.log(network);
+    if (process.env.NODE_ENV === 'development') {
+        console.log(network);
+    }
 
     const wallets = useMemo(
         () => [
