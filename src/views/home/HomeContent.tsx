@@ -208,10 +208,7 @@ export const HomeContent: FC<HomeContentProps> = ({
       </div>
 
       {/* ── Recent Activity ── */}
-      <div>
-        <div className="flex justify-between items-end mb-4 px-1">
-          <h2 className="text-white text-lg font-bold tracking-wide">Recent Activity</h2>
-        </div>
+      <div className="mt-8">
         <RecentActivity onViewMoreClick={() => setActiveTab('history')} />
       </div>
     </div>
