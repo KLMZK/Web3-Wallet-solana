@@ -35,6 +35,7 @@ export function tokenColor(symbol: string): string {
 interface HomeContentProps {
   balance: number;
   solPrice: number | null;
+  solPriceChange: number | null;
   splTokens: SPLToken[];
   loadingTokens: boolean;
   setActiveTab: (t: Tab) => void;
@@ -46,6 +47,7 @@ interface HomeContentProps {
 export const HomeContent: FC<HomeContentProps> = ({
   balance,
   solPrice,
+  solPriceChange,
   splTokens,
   loadingTokens,
   onSendClick,
@@ -53,6 +55,21 @@ export const HomeContent: FC<HomeContentProps> = ({
   onReceiveClick,
 }) => {
   const fiatValue = solPrice ? (balance * solPrice).toFixed(2) : '0.00';
+
+  // Format the 24h change badge — returns null when unavailable or NaN
+  const changeLabel =
+    solPriceChange !== null && !isNaN(solPriceChange)
+      ? (solPriceChange > 0 ? '+' : '') + solPriceChange.toFixed(2) + '%'
+      : null;
+
+  const changeColor =
+    solPriceChange === null || isNaN(solPriceChange)
+      ? C.muted
+      : solPriceChange > 0
+      ? C.green
+      : solPriceChange < 0
+      ? C.red
+      : C.muted;
 
   return (
     <div className="flex flex-col gap-8 w-full animate-in fade-in duration-300">
@@ -73,6 +90,17 @@ export const HomeContent: FC<HomeContentProps> = ({
           >
             {solPrice ? `LIVE • 1 SOL = $${solPrice.toFixed(2)}` : 'Fetching price...'}
           </span>
+          {solPrice && changeLabel && (
+            <span
+              className="text-[12px] font-semibold px-1.5 py-0.5 rounded-md"
+              style={{
+                color: changeColor,
+                backgroundColor: `${changeColor}1a`,
+              }}
+            >
+              {changeLabel}
+            </span>
+          )}
         </div>
 
         {/* SOL Balance */}
