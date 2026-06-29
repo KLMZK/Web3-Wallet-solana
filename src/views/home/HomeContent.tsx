@@ -7,7 +7,6 @@ import {
 } from 'lucide-react';
 import SkeletonRow from '../../components/ui/SkeletonRow';
 import { Tab } from '../../components/layout/Sidebar';
-
 import { C } from '../../utils/theme';
 
 // Token brand colors for known SPL token symbols
@@ -48,7 +47,6 @@ export const HomeContent: FC<HomeContentProps> = ({
   solPrice,
   splTokens,
   loadingTokens,
-  setActiveTab,
   onSendClick,
   onSwapClick,
 }) => {
@@ -144,9 +142,7 @@ export const HomeContent: FC<HomeContentProps> = ({
             </div>
             <div className="flex-1">
               <p className="text-white text-[15px] font-semibold">Solana</p>
-              <p className="text-[#7a8fa6] text-[13px] mt-0.5">
-                {balance.toFixed(4)} SOL
-              </p>
+              <p className="text-[#7a8fa6] text-[13px] mt-0.5">{balance.toFixed(4)} SOL</p>
             </div>
             <div className="text-right">
               <p className="text-white text-[15px] font-semibold">${fiatValue}</p>
@@ -178,10 +174,7 @@ export const HomeContent: FC<HomeContentProps> = ({
                     borderColor: `${token.color}33`,
                   }}
                 >
-                  <span
-                    className="text-[11px] font-bold"
-                    style={{ color: token.color }}
-                  >
+                  <span className="text-[11px] font-bold" style={{ color: token.color }}>
                     {token.symbol.slice(0, 3)}
                   </span>
                 </div>
@@ -203,21 +196,6 @@ export const HomeContent: FC<HomeContentProps> = ({
               <p className="text-[#7a8fa6] text-[14px]">No tokens found</p>
             </div>
           )}
-        </div>
-      </div>
-
-      {/* ── Recent Activity ── */}
-      <div>
-        <div className="flex justify-between items-end mb-4 px-1">
-          <h2 className="text-white text-lg font-bold tracking-wide">Recent Activity</h2>
-        </div>
-        <div
-          className="rounded-2xl overflow-hidden"
-          style={{ backgroundColor: C.surface, border: `1px solid ${C.border}` }}
-        >
-          <div className="px-4 py-6 text-center">
-            <p className="text-[#7a8fa6] text-[14px]">No recent activity</p>
-          </div>
         </div>
       </div>
     </div>
