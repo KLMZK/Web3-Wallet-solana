@@ -95,6 +95,13 @@ const App: FC<AppProps> = ({ Component, pageProps }) => {
         <title>Xpectre Wallet</title>
         <meta name="description" content="Xpectre Labs — Solana Web3 Wallet Dashboard" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="theme-color" content="#121921" />
+        <meta property="og:title" content="Xpectre Wallet" />
+        <meta property="og:description" content="Xpectre Labs — Solana Web3 Wallet" />
+        <meta property="og:type" content="website" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Xpectre Wallet" />
+        <meta name="twitter:description" content="Xpectre Labs — Solana Web3 Wallet" />
       </Head>
 
       <ContextProvider>

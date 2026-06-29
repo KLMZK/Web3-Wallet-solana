@@ -65,7 +65,9 @@ export const HistoryFilters: FC<HistoryFiltersProps> = ({
         style={{ backgroundColor: C.surface, borderColor: C.border }}
       >
         <Search size={18} style={{ color: C.muted, flexShrink: 0 }} />
+        <label htmlFor="address-search" className="sr-only">Search by wallet address</label>
         <input
+          id="address-search"
           type="text"
           placeholder="Search by wallet address..."
           value={searchAddress}
@@ -74,6 +76,7 @@ export const HistoryFilters: FC<HistoryFiltersProps> = ({
         />
         {searchAddress && (
           <button
+            aria-label="Clear search"
             onClick={() => setSearchAddress('')}
             className="p-1 hover:bg-white/5 rounded transition-colors cursor-pointer"
             style={{ color: C.muted }}
