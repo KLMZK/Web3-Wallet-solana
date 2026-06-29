@@ -21,6 +21,7 @@ import ConnectWallet from '../../components/ConnectWallet';
 import { HomeContent, SPLToken, tokenColor } from './HomeContent';
 import { MarketSwapView } from '../market/MarketSwapView';
 import { SendModal } from '../send/SendModal';
+import { ReceiveModal } from '../receive/ReceiveModal';
 import { SettingsView } from '../settings/SettingsView';
 
 /* ─────────────────────────────────────────────
@@ -70,8 +71,10 @@ export const HomeView: FC = () => {
   const [splTokens, setSplTokens] = useState<SPLToken[]>([]);
   const [loadingTokens, setLoadingTokens] = useState(false);
   const [solPrice, setSolPrice] = useState<number | null>(null);
+  const [solPriceChange, setSolPriceChange] = useState<number | null>(null);
   const [sendModalOpen, setSendModalOpen] = useState(false);
   const [swapModalOpen, setSwapModalOpen] = useState(false);
+  const [receiveModalOpen, setReceiveModalOpen] = useState(false);
 
   // Map networkConfiguration hook value to UI label
   const networkUI: NetworkUI =
@@ -94,12 +97,15 @@ export const HomeView: FC = () => {
     const fetchPrice = async () => {
       try {
         const r = await fetch(
-          'https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd',
+          'https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd&include_24hr_change=true',
           { signal: AbortSignal.timeout(8000) }
         );
         if (!r.ok) throw new Error('CoinGecko unavailable');
         const d = await r.json();
-        if (mounted && d?.solana?.usd) setSolPrice(d.solana.usd);
+        if (mounted && d?.solana?.usd) {
+          setSolPrice(d.solana.usd);
+          setSolPriceChange(d.solana.usd_24h_change ?? null);
+        }
       } catch {
         try {
           const r2 = await fetch(
@@ -218,11 +224,13 @@ export const HomeView: FC = () => {
           <HomeContent
             balance={balance}
             solPrice={solPrice}
+            solPriceChange={solPriceChange}
             splTokens={splTokens}
             loadingTokens={loadingTokens}
             setActiveTab={setActiveTab}
             onSendClick={() => setSendModalOpen(true)}
             onSwapClick={() => setSwapModalOpen(true)}
+            onReceiveClick={() => setReceiveModalOpen(true)}
           />
         )}
 
@@ -243,6 +251,7 @@ export const HomeView: FC = () => {
       </DashboardLayout>
       <SendModal isOpen={sendModalOpen} onClose={() => setSendModalOpen(false)} />
       <MarketSwapView isOpen={swapModalOpen} onClose={() => setSwapModalOpen(false)} solBalance={balance} />
+      <ReceiveModal isOpen={receiveModalOpen} onClose={() => setReceiveModalOpen(false)} />
     </>
   );
 };

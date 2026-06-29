@@ -37,23 +37,41 @@ export function tokenColor(symbol: string): string {
 interface HomeContentProps {
   balance: number;
   solPrice: number | null;
+  solPriceChange: number | null;
   splTokens: SPLToken[];
   loadingTokens: boolean;
   setActiveTab: (t: Tab) => void;
   onSendClick: () => void;
   onSwapClick: () => void;
+  onReceiveClick: () => void;
 }
 
 export const HomeContent: FC<HomeContentProps> = ({
   balance,
   solPrice,
+  solPriceChange,
   splTokens,
   loadingTokens,
-  setActiveTab,
   onSendClick,
   onSwapClick,
+  onReceiveClick,
 }) => {
   const fiatValue = solPrice ? (balance * solPrice).toFixed(2) : '0.00';
+
+  // Format the 24h change badge — returns null when unavailable or NaN
+  const changeLabel =
+    solPriceChange !== null && !isNaN(solPriceChange)
+      ? (solPriceChange > 0 ? '+' : '') + solPriceChange.toFixed(2) + '%'
+      : null;
+
+  const changeColor =
+    solPriceChange === null || isNaN(solPriceChange)
+      ? C.muted
+      : solPriceChange > 0
+      ? C.green
+      : solPriceChange < 0
+      ? C.red
+      : C.muted;
 
   return (
     <div className="flex flex-col gap-8 w-full animate-in fade-in duration-300">
@@ -74,6 +92,17 @@ export const HomeContent: FC<HomeContentProps> = ({
           >
             {solPrice ? `LIVE • 1 SOL = $${solPrice.toFixed(2)}` : 'Fetching price...'}
           </span>
+          {solPrice && changeLabel && (
+            <span
+              className="text-[12px] font-semibold px-1.5 py-0.5 rounded-md"
+              style={{
+                color: changeColor,
+                backgroundColor: `${changeColor}1a`,
+              }}
+            >
+              {changeLabel}
+            </span>
+          )}
         </div>
 
         {/* SOL Balance */}
@@ -104,7 +133,7 @@ export const HomeContent: FC<HomeContentProps> = ({
             {
               label: 'Receive',
               icon: <ArrowDownLeft size={20} className="text-[#dea001]" />,
-              onClick: () => {},
+              onClick: onReceiveClick,
             },
           ].map((a) => (
             <button
@@ -145,9 +174,7 @@ export const HomeContent: FC<HomeContentProps> = ({
             </div>
             <div className="flex-1">
               <p className="text-white text-[15px] font-semibold">Solana</p>
-              <p className="text-[#7a8fa6] text-[13px] mt-0.5">
-                {balance.toFixed(4)} SOL
-              </p>
+              <p className="text-[#7a8fa6] text-[13px] mt-0.5">{balance.toFixed(4)} SOL</p>
             </div>
             <div className="text-right">
               <p className="text-white text-[15px] font-semibold">${fiatValue}</p>
@@ -179,10 +206,7 @@ export const HomeContent: FC<HomeContentProps> = ({
                     borderColor: `${token.color}33`,
                   }}
                 >
-                  <span
-                    className="text-[11px] font-bold"
-                    style={{ color: token.color }}
-                  >
+                  <span className="text-[11px] font-bold" style={{ color: token.color }}>
                     {token.symbol.slice(0, 3)}
                   </span>
                 </div>
@@ -206,7 +230,6 @@ export const HomeContent: FC<HomeContentProps> = ({
           )}
         </div>
       </div>
-
       {/* ── Recent Activity ── */}
       <div className="mt-8">
         <RecentActivity onViewMoreClick={() => setActiveTab('history')} />
