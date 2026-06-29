@@ -52,6 +52,7 @@ export const HomeContent: FC<HomeContentProps> = ({
   solPriceChange,
   splTokens,
   loadingTokens,
+  setActiveTab,
   onSendClick,
   onSwapClick,
   onReceiveClick,
