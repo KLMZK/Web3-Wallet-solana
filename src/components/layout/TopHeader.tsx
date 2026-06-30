@@ -73,10 +73,10 @@ const TopHeader: FC<TopHeaderProps> = ({
 
   return (
     <header
-      className="w-full border-b sticky top-0 z-40 px-4 md:px-8 py-4 flex items-center justify-between gap-4 shrink-0"
+      className="w-full border-b z-40 px-4 md:px-8 py-4 flex items-center justify-between gap-4 shrink-0"
       style={{
         borderColor: C.border,
-        backgroundColor: 'rgba(16, 19, 28, 0.7)',
+        backgroundColor: 'rgba(16, 19, 28, 0.95)',
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',
       }}
