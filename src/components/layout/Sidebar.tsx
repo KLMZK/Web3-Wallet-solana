@@ -32,7 +32,7 @@ const Sidebar: FC<SidebarProps> = ({ active, onChange }) => {
         className={`p-6 flex items-center mb-4 shrink-0 overflow-hidden cursor-pointer border-none bg-transparent hover:opacity-80 transition-opacity text-left w-full focus:outline-none ${isCollapsed ? 'justify-center px-0' : 'gap-3'}`}
       >
         <img
-          src="/long.PNG"
+          src="/long.png"
           alt="Xpectre Logo"
           className="h-8 w-auto object-contain select-none shrink-0"
         />
