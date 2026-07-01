@@ -7,12 +7,12 @@ import {
 import { Keypair, PublicKey, Transaction, VersionedTransaction } from '@solana/web3.js';
 import * as nacl from 'tweetnacl';
 
-export const LocalWalletName = 'In-App Wallet' as WalletName<'In-App Wallet'>;
+export const LocalWalletName = 'XpectreWallet' as WalletName<'XpectreWallet'>;
 
 export class LocalWalletAdapter extends BaseMessageSignerWalletAdapter {
   name = LocalWalletName;
   url = 'https://localhost';
-  icon = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJjdXJyZW50Q29sb3IiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMjEgMTJWMjdIM3YtNW0xOCAwSDNWMiIvPjxwYXRoIGQ9Ik0yMSAyMkgzIi8+PC9zdmc+'; // Placeholder icon
+  icon = '/logo.jpg';
   
   readonly supportedTransactionVersions = new Set(['legacy', 0] as const);
   readyState = WalletReadyState.Installed;
