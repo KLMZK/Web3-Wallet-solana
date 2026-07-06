@@ -65,6 +65,12 @@ export const SettingsView: FC<SettingsViewProps> = ({
     logAuditEvent('security', 'audit_logs_cleared', 'Security audit logs cleared by user');
   };
 
+  const handleGoToFaucet = () => {
+    copy(publicKeyStr, 'Address copied! Paste it in the Faucet.');
+    logAuditEvent('settings', 'faucet_redirect', 'Copied address and redirected to official Solana Faucet');
+    window.open('https://faucet.solana.com/', '_blank');
+  };
+
   return (
     <div className="flex flex-col gap-8 w-full max-w-2xl mx-auto animate-in fade-in duration-300">
       {/* Wallet Management */}
@@ -129,6 +135,27 @@ export const SettingsView: FC<SettingsViewProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Developer Tools (Faucet) - Solo visible en Devnet */}
+      {networkUI === 'Devnet' && (
+        <div>
+          <h2 className="text-[#dea001] text-lg font-bold mb-4 px-1 tracking-wide">Developer Tools</h2>
+          <div
+            className="rounded-2xl border p-5 bg-[#dea001]/5"
+            style={{ borderColor: 'rgba(222, 160, 1, 0.2)' }}
+          >
+            <p className="text-[#7a8fa6] text-[14px] mb-5 leading-relaxed">
+              Actualmente estás conectado a la red de pruebas (Devnet). Ve al Faucet oficial para solicitar fondos y realizar transacciones sin usar SOL real. Se copiará tu dirección automáticamente.
+            </p>
+            <button
+              onClick={handleGoToFaucet}
+              className="w-full py-3 rounded-xl font-bold border-none cursor-pointer bg-[#dea001] text-black hover:bg-[#dea001]/90 shadow-[0_0_15px_rgba(222,160,1,0.2)] transition-all flex items-center justify-center gap-2"
+            >
+              Ir al Faucet de Solana
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Preferences */}
       <div>
