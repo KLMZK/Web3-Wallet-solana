@@ -18,12 +18,14 @@ const ConnectWallet: FC = () => {
         Access your Crypto
       </h1>
 
-      {/* Connect Button — opens wallet adapter modal */}
-      <WalletButton
-        className="!w-full !max-w-[360px] !bg-[#dea001] !text-[#10131c] !border-none !rounded-2xl !py-4 !text-lg !font-extrabold !cursor-pointer hover:!brightness-110 !transition-all !shadow-none !h-auto !justify-center"
-      >
-        Connect Wallet
-      </WalletButton>
+      <div className="flex flex-col gap-4 w-full max-w-[360px]">
+        {/* Connect Button — opens wallet adapter modal */}
+        <WalletButton
+          className="!w-full !bg-[#dea001] !text-[#10131c] !border-none !rounded-2xl !py-4 !text-lg !font-extrabold !cursor-pointer hover:!brightness-110 !transition-all !shadow-none !h-auto !justify-center"
+        >
+          Connect Wallet
+        </WalletButton>
+      </div>
     </div>
   );
 };
