@@ -59,9 +59,8 @@ export const BuyModal: FC<BuyModalProps> = ({ isOpen, onClose }) => {
                     borderRadius:    20,
                     padding:         '28px 0 0 0',
                     width:           '100%',
-                    maxWidth:        500,
-                    height:          650,
-                    maxHeight:       '90vh',
+                    maxWidth:        420,
+                    height:          'auto',
                     display:         'flex',
                     flexDirection:   'column',
                     boxShadow:       '0 24px 64px rgba(0,0,0,0.5)',
@@ -94,16 +93,16 @@ export const BuyModal: FC<BuyModalProps> = ({ isOpen, onClose }) => {
                     </button>
                 </div>
 
-                {/* MoonPay iFrame */}
-                <div style={{ flex: 1, backgroundColor: '#ffffff', position: 'relative' }}>
+                {/* MoonPay Redirect Info */}
+                <div style={{ flex: 1, backgroundColor: C.surfaceSolid, padding: '0 28px 28px 28px', display: 'flex', flexDirection: 'column', gap: 20 }}>
                     {!publicKey && (
                         <div style={{ 
-                            position: 'absolute', 
-                            inset: 0, 
+                            flex: 1,
                             display: 'flex', 
                             alignItems: 'center', 
                             justifyContent: 'center',
-                            backgroundColor: C.surfaceSolid,
+                            backgroundColor: 'rgba(255,255,255,0.02)',
+                            borderRadius: 16,
                             color: C.muted,
                             flexDirection: 'column',
                             gap: 12,
@@ -114,16 +113,43 @@ export const BuyModal: FC<BuyModalProps> = ({ isOpen, onClose }) => {
                         </div>
                     )}
                     {publicKey && (
-                        <iframe
-                            src={moonpayUrl}
-                            allow="accelerometer; autoplay; camera; gyroscope; payment"
-                            style={{
-                                width: '100%',
-                                height: '100%',
-                                border: 'none',
-                            }}
-                            title="Buy Solana with MoonPay"
-                        />
+                        <>
+                            <div style={{
+                                backgroundColor: 'rgba(255,255,255,0.03)',
+                                borderRadius: 16,
+                                padding: 24,
+                                textAlign: 'center',
+                                border: `1px solid ${C.border}`
+                            }}>
+                                <p style={{ color: C.text, fontSize: 15, lineHeight: 1.6, marginBottom: 16 }}>
+                                    We partner with <strong>MoonPay</strong> to provide a secure and fast way to purchase SOL using your credit card, debit card, or bank transfer.
+                                </p>
+                                <p style={{ color: C.muted, fontSize: 13, lineHeight: 1.5 }}>
+                                    For your security, MoonPay runs in a verified external window. The purchased SOL will be sent directly to your connected wallet address.
+                                </p>
+                            </div>
+
+                            <button
+                                onClick={() => window.open(moonpayUrl, 'MoonPay', 'width=450,height=750,noopener,noreferrer')}
+                                style={{
+                                    width:           '100%',
+                                    padding:         '16px 0',
+                                    backgroundColor: C.gold,
+                                    color:           C.bg,
+                                    border:          'none',
+                                    borderRadius:    14,
+                                    fontSize:        16,
+                                    fontWeight:      800,
+                                    cursor:          'pointer',
+                                    transition:      'opacity 0.18s',
+                                    marginTop:       'auto',
+                                }}
+                                onMouseEnter={e => (e.currentTarget.style.opacity = '0.88')}
+                                onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+                            >
+                                Continue to MoonPay
+                            </button>
+                        </>
                     )}
                 </div>
             </div>
