@@ -41,6 +41,7 @@ interface HomeContentProps {
   splTokens: SPLToken[];
   loadingTokens: boolean;
   setActiveTab: (t: Tab) => void;
+  onBuyClick: () => void;
   onSendClick: () => void;
   onSwapClick: () => void;
   onReceiveClick: () => void;
@@ -53,6 +54,7 @@ export const HomeContent: FC<HomeContentProps> = ({
   splTokens,
   loadingTokens,
   setActiveTab,
+  onBuyClick,
   onSendClick,
   onSwapClick,
   onReceiveClick,
@@ -119,7 +121,7 @@ export const HomeContent: FC<HomeContentProps> = ({
             {
               label: 'Buy',
               icon: <ShoppingCart size={20} className="text-[#dea001]" />,
-              onClick: () => {},
+              onClick: onBuyClick,
             },
             {
               label: 'Swap',
