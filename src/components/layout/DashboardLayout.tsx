@@ -36,7 +36,7 @@ const DashboardLayout: FC<DashboardLayoutProps> = ({
   }, [activeTab]);
 
   return (
-    <div className="flex flex-col min-h-screen relative z-10 overflow-hidden">
+    <div className="flex flex-col h-screen relative z-10 overflow-hidden">
       <div className="flex flex-1 overflow-hidden h-screen">
         {/* Desktop Sidebar */}
         <Sidebar active={activeTab} onChange={setActiveTab} />
