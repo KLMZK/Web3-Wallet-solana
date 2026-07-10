@@ -4,6 +4,8 @@ import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 
 import { HistoryView } from '../history/HistoryView';
 
+import { RecentActivity } from '../../components/RecentActivity';
+
 // Scaffold hooks (unmodified)
 import useUserSOLBalanceStore from '../../stores/useUserSOLBalanceStore';
 import { notify } from '../../utils/notifications';

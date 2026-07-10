@@ -95,7 +95,7 @@ export const TransactionRow: FC<TransactionRowProps> = ({
             {isReceived ? 'Received' : isFailed ? 'Failed' : 'Sent'}
           </p>
           <p className="text-[#7a8fa6] text-[13px]">
-            {isReceived ? 'from' : 'to'} {addressLabel}
+            {isFailed ? 'Error:' : isReceived ? 'from' : 'to'} {addressLabel}
           </p>
           {isPhishing && (
             <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-[#ff4a4a]/20 text-[#ff4a4a] border border-[#ff4a4a]/40 animate-pulse">
