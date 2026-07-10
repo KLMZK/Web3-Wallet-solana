@@ -2,6 +2,8 @@ import { FC, useEffect, useState, useCallback } from 'react';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 
+import { HistoryView } from '../history/HistoryView';
+
 // Scaffold hooks (unmodified)
 import useUserSOLBalanceStore from '../../stores/useUserSOLBalanceStore';
 import { notify } from '../../utils/notifications';
@@ -52,7 +54,7 @@ export const HomeView: FC = () => {
   // Map networkConfiguration hook value to UI label
   const networkUI: NetworkUI =
     networkConfiguration === 'mainnet-beta' ? 'Mainnet' :
-    networkConfiguration === 'testnet' ? 'Testnet' : 'Devnet';
+      networkConfiguration === 'testnet' ? 'Testnet' : 'Devnet';
 
   const setNetworkUI = useCallback(
     (n: NetworkUI) => {
@@ -136,7 +138,7 @@ export const HomeView: FC = () => {
 
     // 1. Initial fetch on mount or wallet change
     getUserSOLBalance(publicKey, connection);
-    
+
     // 2. Subscribe to wallet account changes (fires when SOL balance changes, e.g. paying fees)
     const subscriptionId = connection.onAccountChange(
       publicKey,
@@ -179,46 +181,43 @@ export const HomeView: FC = () => {
   ═══════════════════════════════════════════ */
   return (
     <>
-    <DashboardLayout
-      activeTab={activeTab}
-      setActiveTab={setActiveTab}
-      publicKeyStr={publicKeyStr}
-      networkUI={networkUI}
-      setNetworkUI={setNetworkUI}
-      autoConnect={autoConnect}
-      setAutoConnect={setAutoConnect}
-      onDisconnect={handleDisconnect}
-    >
-      {activeTab === 'home' && (
-        <HomeContent
-          balance={balance}
-          solPrice={solPrice}
-          splTokens={splTokens}
-          loadingTokens={loadingTokens}
-          setActiveTab={setActiveTab}
-          onSendClick={() => setSendModalOpen(true)}
-          onSwapClick={() => setSwapModalOpen(true)}
-        />
-      )}
+      <DashboardLayout
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        publicKeyStr={publicKeyStr}
+        networkUI={networkUI}
+        setNetworkUI={setNetworkUI}
+        autoConnect={autoConnect}
+        setAutoConnect={setAutoConnect}
+        onDisconnect={handleDisconnect}
+      >
+        {activeTab === 'home' && (
+          <HomeContent
+            balance={balance}
+            solPrice={solPrice}
+            splTokens={splTokens}
+            loadingTokens={loadingTokens}
+            setActiveTab={setActiveTab}
+            onSendClick={() => setSendModalOpen(true)}
+            onSwapClick={() => setSwapModalOpen(true)}
+          />
+        )}
 
-      {activeTab === 'history' && (
-        <div className="flex flex-col items-center justify-center h-full text-[#7a8fa6] pt-20">
-            <h2 className="text-2xl font-bold text-white mb-2">Transaction History</h2>
-            <p>Coming soon...</p>
-        </div>
-      )}
+        {activeTab === 'history' && (
+          <HistoryView />
+        )}
 
-      {activeTab === 'settings' && (
-        <SettingsView
-          publicKeyStr={publicKeyStr}
-          networkUI={networkUI}
-          setNetworkUI={setNetworkUI}
-          autoConnect={autoConnect}
-          setAutoConnect={setAutoConnect}
-          onDisconnect={handleDisconnect}
-        />
-      )}
-    </DashboardLayout>
+        {activeTab === 'settings' && (
+          <SettingsView
+            publicKeyStr={publicKeyStr}
+            networkUI={networkUI}
+            setNetworkUI={setNetworkUI}
+            autoConnect={autoConnect}
+            setAutoConnect={setAutoConnect}
+            onDisconnect={handleDisconnect}
+          />
+        )}
+      </DashboardLayout>
       <SendModal isOpen={sendModalOpen} onClose={() => setSendModalOpen(false)} />
       <MarketSwapView isOpen={swapModalOpen} onClose={() => setSwapModalOpen(false)} solBalance={balance} />
     </>
