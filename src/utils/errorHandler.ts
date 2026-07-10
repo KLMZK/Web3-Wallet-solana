@@ -61,6 +61,18 @@ function classifySolanaError(raw: string): Pick<WalletError, 'code' | 'message'>
         };
     }
 
+    if (
+        msg.includes('could_not_find_any_route') ||
+        msg.includes('could not find any route') ||
+        msg.includes('no route found') ||
+        msg.includes('route')
+    ) {
+        return {
+            code: 'SLIPPAGE_TOO_LOW',
+            message: 'No route found with the current slippage tolerance. Try increasing it.',
+        };
+    }
+
     // Fallback for any unrecognised Solana error
     return {
         code: 'UNKNOWN_SOLANA_ERROR',
