@@ -15,6 +15,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Connection, PublicKey, ConfirmedSignatureInfo } from '@solana/web3.js';
 import { notify } from '../utils/notifications';
+import { handleError } from '../utils/errorHandler';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -39,6 +40,7 @@ export interface UseTransactionHistoryState {
   error: string | null;
   hasMore: boolean;
   fetchMore: () => Promise<void>;
+  refresh: () => Promise<void>;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -154,23 +156,26 @@ export function useTransactionHistory(
 
               // Iterate through instructions
               for (const instruction of message.instructions) {
-                // Check if this is a System program SOL transfer
-                if (instruction.program === 'system' && instruction.parsed?.type === 'transfer') {
-                  const parsed = instruction.parsed;
-                  const source = parsed.info?.source;
-                  const destination = parsed.info?.destination;
-                  const transferAmount = parsed.info?.lamports ?? 0;
+                // Check if the instruction is a ParsedInstruction (since it can also be PartiallyDecodedInstruction)
+                if ('program' in instruction && 'parsed' in instruction) {
+                  // Check if this is a System program SOL transfer
+                  if (instruction.program === 'system' && instruction.parsed?.type === 'transfer') {
+                    const parsed = instruction.parsed;
+                    const source = parsed.info?.source;
+                    const destination = parsed.info?.destination;
+                    const transferAmount = parsed.info?.lamports ?? 0;
 
-                  if (source === publicKey.toBase58()) {
-                    // User is the source → SENT
-                    type = 'sent';
-                    amount = transferAmount / 1e9; // Convert lamports to SOL
-                    address = destination;
-                  } else if (destination === publicKey.toBase58()) {
-                    // User is the destination → RECEIVED
-                    type = 'received';
-                    amount = transferAmount / 1e9;
-                    address = source;
+                    if (source === publicKey.toBase58()) {
+                      // User is the source → SENT
+                      type = 'sent';
+                      amount = transferAmount / 1e9; // Convert lamports to SOL
+                      address = destination;
+                    } else if (destination === publicKey.toBase58()) {
+                      // User is the destination → RECEIVED
+                      type = 'received';
+                      amount = transferAmount / 1e9;
+                      address = source;
+                    }
                   }
                 }
 
@@ -219,13 +224,8 @@ export function useTransactionHistory(
           setLastSignature(signatures[signatures.length - 1].signature);
         }
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'Failed to fetch transaction history';
-        setError(message);
-        notify({
-          type: 'error',
-          message: 'Failed to load transaction history',
-          description: message,
-        });
+        const walletError = handleError(err, 'useTransactionHistory');
+        setError(walletError.message);
       } finally {
         setLoading(false);
       }
@@ -262,11 +262,22 @@ export function useTransactionHistory(
     await fetchTransactions(true);
   }, [fetchTransactions, hasMore, loading]);
 
+  // ───────────────────────────────────────────────────────────────────────
+  // Refresh transaction history
+  // ───────────────────────────────────────────────────────────────────────
+
+  const refresh = useCallback(async () => {
+    setLastSignature(null);
+    setHasMore(true);
+    await fetchTransactions(false);
+  }, [fetchTransactions]);
+
   return {
     transactions,
     loading,
     error,
     hasMore,
     fetchMore,
+    refresh,
   };
 }
