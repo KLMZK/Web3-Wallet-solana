@@ -66,34 +66,34 @@ const Notification = ({ type, message, description, txid, onHide }) => {
 
   return (
     <div
-      className={`max-w-sm w-full bg-bkg-1 shadow-lg rounded-md mt-2 pointer-events-auto ring-1 ring-black ring-opacity-5 p-2 mx-4 mb-12 overflow-hidden`}
+      className={`max-w-sm w-full shadow-lg rounded-md mt-2 pointer-events-auto ring-1 ring-black ring-opacity-5 mx-4 mb-12 overflow-hidden bg-transparent`}
     >
-      <div className={`p-4 rounded-md bg-gradient-to-r from-purple-900 from-10% via-purple-600 via-30% to-emerald-500 to-90%`}>
+      <div className={`p-4 rounded-md bg-[#141722] border border-[#dea001]/30 shadow-2xl`}>
         <div className={`flex items-center`}>
           <div className={`flex-shrink-0`}>
             {type === 'success' ? (
-              <CheckCircleIcon className={`h-8 w-8 mr-1 text-green`} />
+              <CheckCircleIcon className={`h-8 w-8 mr-1 text-[#dea001]`} />
             ) : null}
-            {type === 'info' && <InformationCircleIcon className={`h-8 w-8 mr-1 text-red`} />}
+            {type === 'info' && <InformationCircleIcon className={`h-8 w-8 mr-1 text-blue-400`} />}
             {type === 'error' && (
-              <XCircleIcon className={`h-8 w-8 mr-1`} />
+              <XCircleIcon className={`h-8 w-8 mr-1 text-[#ff4a4a]`} />
             )}
           </div>
           <div className={`ml-2 w-0 flex-1`}>
-            <div className={`font-bold text-fgd-1`}>{message}</div>
+            <div className={`font-bold text-white`}>{message}</div>
             {description ? (
-              <p className={`mt-0.5 text-sm text-fgd-2`}>{description}</p>
+              <p className={`mt-0.5 text-sm text-[#7a8fa6]`}>{description}</p>
             ) : null}
             {txid ? (
               <div className="flex flex-row">
-         
+
                 <a
                   href={'https://explorer.solana.com/tx/' + txid + `?cluster=${networkConfiguration}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex flex-row link link-accent text-emerald-200"
+                  className="flex flex-row link link-accent text-[#dea001] hover:text-white transition-colors"
                 >
-                  <svg className="flex-shrink-0 h-4 ml-2 mt-0.5 text-primary-light w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" ><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                  <svg className="flex-shrink-0 h-4 ml-2 mt-0.5 text-[#dea001] w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" ><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
                   <div className="flex mx-4">{txid.slice(0, 8)}...
                     {txid.slice(txid.length - 8)}
                   </div>
@@ -104,7 +104,7 @@ const Notification = ({ type, message, description, txid, onHide }) => {
           <div className={`ml-4 flex-shrink-0 self-start flex`}>
             <button
               onClick={() => onHide()}
-              className={`bg-bkg-2 default-transition rounded-md inline-flex text-fgd-3 hover:text-fgd-4 focus:outline-none`}
+              className={`bg-transparent default-transition rounded-md inline-flex text-[#7a8fa6] hover:text-white focus:outline-none`}
             >
               <span className={`sr-only`}>Close</span>
               <XIcon className="h-5 w-5" />
