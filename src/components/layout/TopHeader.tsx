@@ -78,7 +78,9 @@ const TopHeader: FC<TopHeaderProps> = ({
       {/* Fluid Search Bar */}
       <div className="flex-1 max-w-2xl bg-white/[0.03] rounded-2xl px-4 py-2.5 flex items-center gap-2.5 border border-[#dea001]/10 transition-colors focus-within:border-[#dea001]/30">
         <Search size={16} className="text-[#7a8fa6]" />
+        <label htmlFor="global-search" className="sr-only">Search assets, history</label>
         <input
+          id="global-search"
           placeholder="Search assets, history..."
           className="bg-transparent border-none outline-none text-white w-full text-[14px] placeholder:text-[#7a8fa6]"
         />
@@ -151,6 +153,8 @@ const TopHeader: FC<TopHeaderProps> = ({
         {/* Settings Gear Dropdown */}
         <div className="relative">
           <button
+            aria-label="Settings"
+            aria-expanded={settingsOpen}
             onClick={() => {
               setSettingsOpen(!settingsOpen);
               setWalletOpen(false);
