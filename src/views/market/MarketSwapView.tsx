@@ -7,6 +7,7 @@ import { getJupiterQuote, getJupiterTokens, JupiterQuoteResponse, JupiterToken, 
 import { executeSwap } from '../../utils/solana/swap';
 import { notify } from '../../utils/notifications';
 import { handleError } from '../../utils/errorHandler';
+import { ERROR_MESSAGES } from '../../utils/errorConstants';
 
 interface MarketSwapViewProps {
   isOpen: boolean;
@@ -77,7 +78,7 @@ export const MarketSwapView: FC<MarketSwapViewProps> = ({ isOpen, onClose, solBa
       try {
         const quote = await getJupiterQuote(payMint, recMint, numAmount, slippage, payTokenInfo.decimals);
         if (!quote) {
-          setQuoteError('No route found for this trade.');
+          setQuoteError(ERROR_MESSAGES.SLIPPAGE_TOO_LOW);
         } else {
           setQuoteResponse(quote);
         }
@@ -114,7 +115,7 @@ export const MarketSwapView: FC<MarketSwapViewProps> = ({ isOpen, onClose, solBa
 
     const numAmount = parseFloat(amount);
     if (payMint === TOKENS.SOL.mint && numAmount > solBalance) {
-      notify({ type: 'error', message: 'Insufficient SOL balance' });
+      notify({ type: 'error', message: ERROR_MESSAGES.INSUFFICIENT_FUNDS });
       return;
     }
 
