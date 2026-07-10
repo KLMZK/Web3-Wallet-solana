@@ -3,18 +3,55 @@ import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react
 import {
     UnsafeBurnerWalletAdapter
 } from '@solana/wallet-adapter-wallets';
+import { localWalletAdapter } from '../wallet/LocalWalletAdapter';
 import { Cluster, clusterApiUrl } from '@solana/web3.js';
-import { FC, ReactNode, useCallback, useMemo } from 'react';
+import { FC, ReactNode, useCallback, useMemo, useState, useEffect } from 'react';
 import { AutoConnectProvider, useAutoConnect } from './AutoConnectProvider';
 import { notify } from "../utils/notifications";
 import { NetworkConfigurationProvider, useNetworkConfiguration } from './NetworkConfigurationProvider';
 import dynamic from "next/dynamic";
+import { CreateWalletModal } from '../components/wallet/CreateWalletModal';
+import { UnlockWalletModal } from '../components/wallet/UnlockWalletModal';
 
 const ReactUIWalletModalProviderDynamic = dynamic(
   async () =>
     (await import("@solana/wallet-adapter-react-ui")).WalletModalProvider,
   { ssr: false }
 );
+
+const LocalWalletWrapper: FC<{ children: ReactNode }> = ({ children }) => {
+    const [showCreate, setShowCreate] = useState(false);
+    const [showUnlock, setShowUnlock] = useState(false);
+
+    useEffect(() => {
+        const handleUnlockRequest = () => {
+            if (localStorage.getItem('in_app_wallet')) {
+                setShowUnlock(true);
+            } else {
+                setShowCreate(true);
+            }
+        };
+
+        window.addEventListener('request-local-wallet-unlock', handleUnlockRequest);
+        return () => window.removeEventListener('request-local-wallet-unlock', handleUnlockRequest);
+    }, []);
+
+    return (
+        <>
+            {children}
+            <CreateWalletModal
+                isOpen={showCreate}
+                onClose={() => setShowCreate(false)}
+                onSuccess={() => setShowCreate(false)}
+            />
+            <UnlockWalletModal
+                isOpen={showUnlock}
+                onClose={() => setShowUnlock(false)}
+                onSuccess={() => setShowUnlock(false)}
+            />
+        </>
+    );
+};
 
 const WalletContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
     const { autoConnect } = useAutoConnect();
@@ -45,24 +82,36 @@ const WalletContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
     const wallets = useMemo(
         () => [
             new UnsafeBurnerWalletAdapter(),
+            localWalletAdapter,
         ],
         [network]
     );
 
     const onError = useCallback(
         (error: WalletError) => {
+            if (error.name === 'WalletWindowClosedError') {
+                return;
+            }
+            if (error.message?.includes('Wallet not unlocked')) {
+                return;
+            }
             notify({ type: 'error', message: error.message ? `${error.name}: ${error.message}` : error.name });
             console.error(error);
         },
         []
     );
 
+    const isLocalWalletSelected = typeof window !== 'undefined' && localStorage.getItem('walletName')?.includes('XpectreWallet');
+    const effectiveAutoConnect = isLocalWalletSelected ? false : autoConnect;
+
     return (
         // TODO: updates needed for updating and referencing endpoint: wallet adapter rework
         <ConnectionProvider endpoint={endpoint}>
-            <WalletProvider wallets={wallets} onError={onError} autoConnect={autoConnect}>
+            <WalletProvider wallets={wallets} onError={onError} autoConnect={effectiveAutoConnect}>
                 <ReactUIWalletModalProviderDynamic>
-                    {children}
+                    <LocalWalletWrapper>
+                        {children}
+                    </LocalWalletWrapper>
                 </ReactUIWalletModalProviderDynamic>
 			</WalletProvider>
         </ConnectionProvider>
