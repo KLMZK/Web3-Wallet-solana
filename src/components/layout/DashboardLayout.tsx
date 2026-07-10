@@ -14,6 +14,7 @@ interface DashboardLayoutProps {
   autoConnect: boolean;
   setAutoConnect: (v: boolean) => void;
   onDisconnect: () => void;
+  onGlobalSearch?: (query: string) => void;
   children: ReactNode;
 }
 
@@ -26,6 +27,7 @@ const DashboardLayout: FC<DashboardLayoutProps> = ({
   autoConnect,
   setAutoConnect,
   onDisconnect,
+  onGlobalSearch,
   children,
 }) => {
   // Scroll to top on tab change
@@ -48,6 +50,7 @@ const DashboardLayout: FC<DashboardLayoutProps> = ({
             autoConnect={autoConnect}
             setAutoConnect={setAutoConnect}
             onDisconnect={onDisconnect}
+            onGlobalSearch={onGlobalSearch}
           />
 
           {/* Main Content Area */}

@@ -15,9 +15,9 @@ import { FC } from 'react';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import { ArrowUpRight, ArrowDownLeft, Loader, AlertCircle } from 'lucide-react';
 
-import { useRecentTransactions, RecentTransaction } from '../../hooks/useRecentTransactions';
-import { getExplorerUrl } from '../../utils/explorer';
-import { C } from '../../utils/theme';
+import { useRecentTransactions, RecentTransaction } from '../hooks/useRecentTransactions';
+import { getExplorerUrl } from '../utils/explorer';
+import { C } from '../utils/theme';
 
 interface RecentActivityProps {
   onViewMoreClick: () => void; // Callback to switch to History tab
@@ -58,8 +58,9 @@ const RecentTransactionItem: FC<{
   const { type, amount, address, timestamp } = transaction;
   const isReceived = type === 'received';
 
-  const iconColor = isReceived ? C.green : C.red;
-  const iconBg = isReceived ? 'rgba(74, 222, 128, 0.1)' : 'rgba(255, 74, 74, 0.1)';
+  const isFailed = type === 'unknown';
+  const iconColor = isReceived ? C.green : isFailed ? C.red : '#ffffff';
+  const iconBg = isReceived ? 'rgba(74, 222, 128, 0.1)' : isFailed ? 'rgba(255, 74, 74, 0.1)' : 'rgba(255, 255, 255, 0.1)';
 
   return (
     <button
@@ -92,7 +93,7 @@ const RecentTransactionItem: FC<{
       {/* Amount */}
       <p
         className="text-[13px] font-semibold shrink-0"
-        style={{ color: isReceived ? C.green : C.text }}
+        style={{ color: isReceived ? C.green : isFailed ? C.red : '#ffffff' }}
       >
         {isReceived ? '+' : '-'}{amount.toFixed(4)}
       </p>

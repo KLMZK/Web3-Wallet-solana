@@ -86,7 +86,10 @@ export function useRecentTransactions(
         const parsedTxs = await Promise.all(
           signatures.map(async (sig) => {
             try {
-              const tx = await connection.getParsedTransaction(sig.signature, 'confirmed');
+              const tx = await connection.getParsedTransaction(sig.signature, {
+                commitment: 'confirmed',
+                maxSupportedTransactionVersion: 0,
+              });
 
               if (!tx) {
                 return {
@@ -124,7 +127,7 @@ export function useRecentTransactions(
               const message = tx.transaction.message;
 
               for (const instruction of message.instructions) {
-                if (instruction.program === 'system' && instruction.parsed?.type === 'transfer') {
+                if ('parsed' in instruction && instruction.program === 'system' && instruction.parsed?.type === 'transfer') {
                   const parsed = instruction.parsed;
                   const source = parsed.info?.source;
                   const destination = parsed.info?.destination;

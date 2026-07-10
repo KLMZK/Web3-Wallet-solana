@@ -7,6 +7,8 @@ import {
 } from 'lucide-react';
 import SkeletonRow from '../../components/ui/SkeletonRow';
 import { Tab } from '../../components/layout/Sidebar';
+import { RecentActivity } from '../../components/RecentActivity';
+
 import { C } from '../../utils/theme';
 
 // Token brand colors for known SPL token symbols
@@ -50,6 +52,7 @@ export const HomeContent: FC<HomeContentProps> = ({
   solPriceChange,
   splTokens,
   loadingTokens,
+  setActiveTab,
   onSendClick,
   onSwapClick,
   onReceiveClick,
@@ -227,6 +230,10 @@ export const HomeContent: FC<HomeContentProps> = ({
             </div>
           )}
         </div>
+      </div>
+      {/* ── Recent Activity ── */}
+      <div className="mt-8">
+        <RecentActivity onViewMoreClick={() => setActiveTab('history')} />
       </div>
     </div>
   );

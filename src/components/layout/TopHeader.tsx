@@ -23,6 +23,7 @@ interface TopHeaderProps {
   autoConnect: boolean;
   setAutoConnect: (v: boolean) => void;
   onDisconnect: () => void;
+  onGlobalSearch?: (query: string) => void;
 }
 
 function truncate(addr: string) {
@@ -36,11 +37,21 @@ const TopHeader: FC<TopHeaderProps> = ({
   autoConnect,
   setAutoConnect,
   onDisconnect,
+  onGlobalSearch,
 }) => {
   const { setVisible } = useWalletModal();
   const [walletOpen, setWalletOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  const triggerSearch = () => {
+    const val = searchInputRef.current?.value.trim();
+    if (val && onGlobalSearch) {
+      onGlobalSearch(val);
+      if (searchInputRef.current) searchInputRef.current.value = '';
+    }
+  };
   const { copy } = useCopyToClipboard();
 
   // Close dropdowns on outside click
@@ -75,14 +86,21 @@ const TopHeader: FC<TopHeaderProps> = ({
         <HexLogo size={24} />
       </div>
 
-      {/* Fluid Search Bar */}
       <div className="flex-1 max-w-2xl bg-white/[0.03] rounded-2xl px-4 py-2.5 flex items-center gap-2.5 border border-[#dea001]/10 transition-colors focus-within:border-[#dea001]/30">
-        <Search size={16} className="text-[#7a8fa6]" />
+        <button onClick={triggerSearch} className="bg-transparent border-0 p-0 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity" aria-label="Search">
+          <Search size={16} className="text-[#7a8fa6]" />
+        </button>
         <label htmlFor="global-search" className="sr-only">Search assets, history</label>
         <input
+          ref={searchInputRef}
           id="global-search"
-          placeholder="Search assets, history..."
+          placeholder="Search by wallet address..."
           className="bg-transparent border-none outline-none text-white w-full text-[14px] placeholder:text-[#7a8fa6]"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              triggerSearch();
+            }
+          }}
         />
       </div>
 

@@ -63,8 +63,11 @@ export const HistoryFilters: FC<HistoryFiltersProps> = ({
       <div
         className="flex items-center gap-3 rounded-xl px-4 py-3 border"
         style={{ backgroundColor: C.surface, borderColor: C.border }}
+        onClick={() => document.getElementById('address-search')?.focus()}
       >
-        <Search size={18} style={{ color: C.muted, flexShrink: 0 }} />
+        <button className="bg-transparent border-0 p-0 flex items-center justify-center cursor-text" aria-hidden="true">
+          <Search size={18} style={{ color: C.muted, flexShrink: 0 }} />
+        </button>
         <label htmlFor="address-search" className="sr-only">Search by wallet address</label>
         <input
           id="address-search"
