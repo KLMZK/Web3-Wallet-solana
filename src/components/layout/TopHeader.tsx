@@ -23,6 +23,7 @@ interface TopHeaderProps {
   setAutoConnect: (v: boolean) => void;
   onDisconnect: () => void;
   onGlobalSearch?: (query: string) => void;
+  onRequestAirdrop?: () => void; // <--- Propiedad añadida para el Airdrop
 }
 
 function truncate(addr: string) {
@@ -37,6 +38,7 @@ const TopHeader: FC<TopHeaderProps> = ({
   setAutoConnect,
   onDisconnect,
   onGlobalSearch,
+  onRequestAirdrop, // <--- La recibimos aquí
 }) => {
   const { setVisible } = useWalletModal();
   const [walletOpen, setWalletOpen] = useState(false);
@@ -231,6 +233,28 @@ const TopHeader: FC<TopHeaderProps> = ({
                   ))}
                 </div>
               </div>
+
+              {/* Developer Tools (Airdrop) - ¡Solo aparece en Devnet! */}
+              {networkUI === 'Devnet' && (
+                <>
+                  <div className="h-[1px] mt-2 mb-1" style={{ backgroundColor: C.border }} />
+                  <div>
+                    <span className="text-[#dea001] text-[12px] font-semibold block mb-2 uppercase tracking-wide">
+                      Developer Tools
+                    </span>
+                    <button
+                      onClick={() => {
+                        if (onRequestAirdrop) onRequestAirdrop();
+                        setSettingsOpen(false); // Cierra el menú automáticamente
+                      }}
+                      className="w-full py-2.5 rounded-lg font-bold text-[13px] border-none cursor-pointer transition-all bg-[#dea001] text-black hover:bg-[#dea001]/90 shadow-[0_0_10px_rgba(222,160,1,0.2)]"
+                    >
+                      Request 1 SOL (Airdrop)
+                    </button>
+                  </div>
+                </>
+              )}
+
             </div>
           )}
         </div>
