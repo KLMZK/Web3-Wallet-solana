@@ -12,7 +12,7 @@
 // Returns a transaction array with parsed data ready for UI consumption.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { Connection, PublicKey, ConfirmedSignatureInfo } from '@solana/web3.js';
 import { notify } from '../utils/notifications';
 import { handleError } from '../utils/errorHandler';
@@ -62,6 +62,51 @@ export function truncateAddress(addr: string, chars = 4): string {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// HELPER: Sleep utility for rate-limit back-off
+// ═══════════════════════════════════════════════════════════════════════════
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// HELPER: Fetch a single transaction with exponential-backoff retry
+//
+// Why this exists:
+//   Public RPC nodes return HTTP 429 when too many requests arrive at once.
+//   This wrapper retries up to MAX_RETRIES times, doubling the wait on each
+//   attempt so the server has time to recover.
+// ═══════════════════════════════════════════════════════════════════════════
+
+const MAX_RETRIES = 3;
+const BASE_RETRY_MS = 1000; // 1 s → 2 s → 4 s
+
+async function fetchWithRetry(
+  connection: Connection,
+  signature: string,
+  attempt = 0
+): Promise<Awaited<ReturnType<Connection['getParsedTransaction']>>> {
+  try {
+    return await connection.getParsedTransaction(signature, {
+      maxSupportedTransactionVersion: 0,
+      commitment: 'confirmed',
+    });
+  } catch (err: unknown) {
+    const isRateLimit =
+      err instanceof Error &&
+      (err.message.includes('429') || err.message.toLowerCase().includes('too many'));
+
+    if (isRateLimit && attempt < MAX_RETRIES) {
+      const waitMs = BASE_RETRY_MS * Math.pow(2, attempt);
+      console.warn(`[useTransactionHistory] 429 on ${signature.slice(0, 8)}… retrying in ${waitMs}ms`);
+      await sleep(waitMs);
+      return fetchWithRetry(connection, signature, attempt + 1);
+    }
+    throw err;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // MAIN HOOK
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -73,7 +118,10 @@ export function useTransactionHistory(
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
-  const [lastSignature, setLastSignature] = useState<string | null>(null);
+  // useRef instead of useState: the callback always reads the latest value
+  // without needing to be in the useCallback dependency array, which would
+  // recreate fetchTransactions on every page load → infinite fetch loop.
+  const lastSignatureRef = useRef<string | null>(null);
 
   // ───────────────────────────────────────────────────────────────────────
   // Fetch transaction signatures (initial or paginated)
@@ -94,7 +142,7 @@ export function useTransactionHistory(
         // limit: 25 per request (default), before: for pagination
         const signatures = await connection.getSignaturesForAddress(publicKey, {
           limit: 25,
-          before: isLoadMore ? lastSignature : undefined,
+          before: isLoadMore ? lastSignatureRef.current : undefined,
         });
 
         if (signatures.length === 0) {
@@ -104,127 +152,128 @@ export function useTransactionHistory(
           return;
         }
 
-        // Parse each transaction in parallel
-        const parsedTxs = await Promise.all(
-          signatures.map(async (sig) => {
-            try {
-              const tx = await connection.getParsedTransaction(sig.signature, {
-                maxSupportedTransactionVersion: 0,
-                commitment: 'confirmed'
-              });
+        // ─────────────────────────────────────────────────────────────────
+        // Batch processing: fetch transactions in groups of BATCH_SIZE with
+        // a short pause between batches to respect RPC rate limits.
+        //
+        // Instead of firing 25 simultaneous requests (which triggers 429),
+        // we send 5 at a time and wait 300 ms before the next group.
+        // Each individual request also has its own retry logic (fetchWithRetry).
+        // ─────────────────────────────────────────────────────────────────
+        const BATCH_SIZE = 5;
+        const BATCH_DELAY_MS = 300;
+        const parsedTxs: ParsedTransaction[] = [];
 
-              if (!tx) {
-                // Fallback: if transaction can't be parsed, return a minimal entry
+        for (let i = 0; i < signatures.length; i += BATCH_SIZE) {
+          const batch = signatures.slice(i, i + BATCH_SIZE);
+
+          const batchResults = await Promise.all(
+            batch.map(async (sig) => {
+              try {
+                const tx = await fetchWithRetry(connection, sig.signature);
+
+                if (!tx) {
+                  return {
+                    signature: sig.signature,
+                    type: 'unknown' as TransactionType,
+                    amount: 0,
+                    address: 'Unknown',
+                    timestamp: sig.blockTime ?? Date.now() / 1000,
+                    confirmationStatus: getConfirmationStatus(sig),
+                    symbol: 'SOL',
+                    fee: 5000,
+                  };
+                }
+
+                const meta = tx.meta;
+                const fee = meta?.fee ?? 5000;
+
+                if (meta?.err) {
+                  return {
+                    signature: sig.signature,
+                    type: 'unknown' as TransactionType,
+                    amount: 0,
+                    address: 'Failed TX',
+                    timestamp: tx.blockTime ?? Date.now() / 1000,
+                    confirmationStatus: getConfirmationStatus(sig),
+                    symbol: 'SOL',
+                    fee,
+                  };
+                }
+
+                // ─────────────────────────────────────────────────────────
+                // Parse instructions to determine if sent or received SOL
+                // ─────────────────────────────────────────────────────────
+                let type: TransactionType = 'unknown';
+                let amount = 0;
+                let address = 'Contract Interaction';
+                let symbol = 'SOL';
+
+                const message = tx.transaction.message;
+
+                for (const instruction of message.instructions) {
+                  if ('program' in instruction && 'parsed' in instruction) {
+                    if (instruction.program === 'system' && instruction.parsed?.type === 'transfer') {
+                      const parsed = instruction.parsed;
+                      const source = parsed.info?.source;
+                      const destination = parsed.info?.destination;
+                      const transferAmount = parsed.info?.lamports ?? 0;
+
+                      if (source === publicKey.toBase58()) {
+                        type = 'sent';
+                        amount = transferAmount / 1e9;
+                        address = destination;
+                      } else if (destination === publicKey.toBase58()) {
+                        type = 'received';
+                        amount = transferAmount / 1e9;
+                        address = source;
+                      }
+                    }
+                  }
+                  // TODO: Parse SPL token transfers
+                }
+
+                return { signature: sig.signature, type, amount, address,
+                  timestamp: tx.blockTime ?? Date.now() / 1000,
+                  confirmationStatus: getConfirmationStatus(sig), symbol, fee };
+
+              } catch (err) {
+                console.error(`[useTransactionHistory] Error parsing ${sig.signature}:`, err);
                 return {
                   signature: sig.signature,
                   type: 'unknown' as TransactionType,
                   amount: 0,
-                  address: 'Unknown',
+                  address: 'Parse Error',
                   timestamp: sig.blockTime ?? Date.now() / 1000,
                   confirmationStatus: getConfirmationStatus(sig),
                   symbol: 'SOL',
-                  fee: 5000, // Default Solana fee estimate
+                  fee: 5000,
                 };
               }
+            })
+          );
 
-              // Extract transaction meta (fees, success status)
-              const meta = tx.meta;
-              const fee = meta?.fee ?? 5000;
+          parsedTxs.push(...batchResults);
 
-              // Check if transaction was successful
-              if (meta?.err) {
-                // Failed transaction — still display but mark as unknown
-                return {
-                  signature: sig.signature,
-                  type: 'unknown' as TransactionType,
-                  amount: 0,
-                  address: 'Failed TX',
-                  timestamp: tx.blockTime ?? Date.now() / 1000,
-                  confirmationStatus: getConfirmationStatus(sig),
-                  symbol: 'SOL',
-                  fee,
-                };
-              }
+          // Flush each batch to the UI immediately so the user sees results
+          // progressively rather than waiting for all 25 to finish.
+          if (isLoadMore) {
+            setTransactions((prev) => [...prev, ...batchResults]);
+          } else {
+            setTransactions([...parsedTxs]);
+          }
 
-              // ─────────────────────────────────────────────────────────
-              // Parse instructions to determine if sent or received SOL
-              // ─────────────────────────────────────────────────────────
-
-              let type: TransactionType = 'unknown';
-              let amount = 0;
-              let address = 'Contract Interaction';
-              let symbol = 'SOL';
-
-              const message = tx.transaction.message;
-
-              // Iterate through instructions
-              for (const instruction of message.instructions) {
-                // Check if the instruction is a ParsedInstruction (since it can also be PartiallyDecodedInstruction)
-                if ('program' in instruction && 'parsed' in instruction) {
-                  // Check if this is a System program SOL transfer
-                  if (instruction.program === 'system' && instruction.parsed?.type === 'transfer') {
-                    const parsed = instruction.parsed;
-                    const source = parsed.info?.source;
-                    const destination = parsed.info?.destination;
-                    const transferAmount = parsed.info?.lamports ?? 0;
-
-                    if (source === publicKey.toBase58()) {
-                      // User is the source → SENT
-                      type = 'sent';
-                      amount = transferAmount / 1e9; // Convert lamports to SOL
-                      address = destination;
-                    } else if (destination === publicKey.toBase58()) {
-                      // User is the destination → RECEIVED
-                      type = 'received';
-                      amount = transferAmount / 1e9;
-                      address = source;
-                    }
-                  }
-                }
-
-                // TODO: Parse SPL token transfers (TokenkegQfeZyiNwAJsyFbPVwwQQfqs5MGcgm3fLZ5j)
-                // This would require additional logic to identify token transfers
-              }
-
-              return {
-                signature: sig.signature,
-                type,
-                amount,
-                address,
-                timestamp: tx.blockTime ?? Date.now() / 1000,
-                confirmationStatus: getConfirmationStatus(sig),
-                symbol,
-                fee,
-              };
-            } catch (err) {
-              console.error(`Error parsing transaction ${sig.signature}:`, err);
-              // Return a fallback entry
-              return {
-                signature: sig.signature,
-                type: 'unknown' as TransactionType,
-                amount: 0,
-                address: 'Parse Error',
-                timestamp: sig.blockTime ?? Date.now() / 1000,
-                confirmationStatus: getConfirmationStatus(sig),
-                symbol: 'SOL',
-                fee: 5000,
-              };
-            }
-          })
-        );
-
-        // Update state
-        if (isLoadMore) {
-          setTransactions((prev) => [...prev, ...parsedTxs]);
-        } else {
-          setTransactions(parsedTxs);
+          // Wait between batches (except after the last one)
+          if (i + BATCH_SIZE < signatures.length) {
+            await sleep(BATCH_DELAY_MS);
+          }
         }
 
         // Set up pagination
         if (signatures.length < 25) {
           setHasMore(false);
         } else {
-          setLastSignature(signatures[signatures.length - 1].signature);
+          lastSignatureRef.current = signatures[signatures.length - 1].signature;
         }
       } catch (err) {
         const walletError = handleError(err, 'useTransactionHistory');
@@ -243,13 +292,13 @@ export function useTransactionHistory(
   useEffect(() => {
     if (!publicKey) {
       setTransactions([]);
-      setLastSignature(null);
+      lastSignatureRef.current = null;
       setHasMore(true);
       return;
     }
 
     // Reset pagination on wallet change
-    setLastSignature(null);
+    lastSignatureRef.current = null;
     setHasMore(true);
 
     // Fetch initial transactions
@@ -270,7 +319,7 @@ export function useTransactionHistory(
   // ───────────────────────────────────────────────────────────────────────
 
   const refresh = useCallback(async () => {
-    setLastSignature(null);
+    lastSignatureRef.current = null;
     setHasMore(true);
     await fetchTransactions(false);
   }, [fetchTransactions]);
