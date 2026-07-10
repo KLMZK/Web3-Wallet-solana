@@ -7,7 +7,6 @@ import {
   LogOut,
   Settings,
 } from 'lucide-react';
-import HexLogo from '../ui/HexLogo';
 import Toggle from '../ui/Toggle';
 import { useCopyToClipboard } from '../../hooks/useCopyToClipboard';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
@@ -82,8 +81,12 @@ const TopHeader: FC<TopHeaderProps> = ({
       }}
     >
       {/* Mobile Logo — hidden on desktop (sidebar has it) */}
-      <div className="md:hidden flex items-center">
-        <HexLogo size={24} />
+      <div className="md:hidden flex items-center shrink-0">
+        <img
+          src="/long.PNG"
+          alt="Xpectre Logo"
+          className="h-7 w-auto object-contain select-none"
+        />
       </div>
 
       <div className="flex-1 max-w-2xl bg-white/[0.03] rounded-2xl px-4 py-2.5 flex items-center gap-2.5 border border-[#dea001]/10 transition-colors focus-within:border-[#dea001]/30">
