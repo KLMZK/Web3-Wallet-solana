@@ -5,6 +5,8 @@ import { getAssociatedTokenAddress } from '@solana/spl-token';
 import { notify } from '../../utils/notifications';
 import { executeTransfer } from '../../utils/solana/signer';
 import useUserSOLBalanceStore from '../../stores/useUserSOLBalanceStore';
+import { sanitizeInput, isValidBase58Address, isPhishingAddress, isLargeTransaction } from '../../utils/security';
+import { logAuditEvent } from '../../utils/security/auditLogger';
 
 // ── Design tokens (mirror of home/index.tsx) ──────────────────────────────────
 const C = {
@@ -84,6 +86,8 @@ export const SendModal: FC<SendModalProps> = ({ isOpen, onClose }) => {
     const [mintAddress,      setMintAddress]      = useState('');
     const [loading,          setLoading]          = useState(false);
     const [inlineError,      setInlineError]      = useState<string | null>(null);
+    const [inlineWarning,    setInlineWarning]    = useState<string | null>(null);
+    const [isPhishing,       setIsPhishing]       = useState(false);
 
     // ── SPL token balance (fetched when mint address is valid) ────────────────
     const [splBalance,       setSplBalance]       = useState<number | null>(null);
@@ -97,9 +101,45 @@ export const SendModal: FC<SendModalProps> = ({ isOpen, onClose }) => {
             setAmount('');
             setMintAddress('');
             setInlineError(null);
+            setInlineWarning(null);
+            setIsPhishing(false);
             setSplBalance(null);
         }
     }, [isOpen]);
+
+    // ── Reactive security & warning checks ───────────────────────────────────
+    useEffect(() => {
+        setIsPhishing(false);
+        setInlineWarning(null);
+
+        const trimmedAddr = recipientAddress.trim();
+        if (!trimmedAddr) return;
+
+        // Phishing check
+        if (isPhishingAddress(trimmedAddr)) {
+            setIsPhishing(true);
+            setInlineError('CRITICAL: Phishing address detected. This address is flagged as unsafe. Sending is disabled.');
+            logAuditEvent('security', 'phishing_blocked', `Phishing address input detected: ${trimmedAddr}`);
+            return;
+        }
+
+        // Clean phishing error if address was changed to something safe
+        if (inlineError?.startsWith('CRITICAL: Phishing')) {
+            setInlineError(null);
+        }
+
+        // Self-transfer check
+        if (publicKey && trimmedAddr === publicKey.toBase58()) {
+            setInlineWarning('Warning: The destination address is your own address (self-transfer).');
+            return;
+        }
+
+        // Large transaction check
+        const numAmt = parseFloat(amount);
+        if (!isNaN(numAmt) && numAmt > 0 && isLargeTransaction(numAmt, transferType)) {
+            setInlineWarning(`Warning: You are transferring a large amount of funds (${numAmt} ${transferType === 'sol' ? 'SOL' : 'tokens'}). Please double check the recipient.`);
+        }
+    }, [recipientAddress, amount, transferType, publicKey]);
 
     // ── Fetch SPL balance when mint address changes (debounced 600ms) ─────────
     // Solana public keys are always 32-44 characters in Base58
@@ -143,10 +183,13 @@ export const SendModal: FC<SendModalProps> = ({ isOpen, onClose }) => {
     function validate(): string | null {
         if (!recipientAddress.trim()) return 'Destination address is required.';
         
+        // Phishing guard
+        if (isPhishingAddress(recipientAddress)) {
+            return 'CRITICAL: Phishing address detected. Sending is disabled.';
+        }
+
         // Validar que la dirección de destino sea correcta (matemáticamente en Solana)
-        try {
-            new PublicKey(recipientAddress.trim());
-        } catch {
+        if (!isValidBase58Address(recipientAddress)) {
             return 'The destination address is not a valid Solana address.';
         }
 
@@ -162,9 +205,7 @@ export const SendModal: FC<SendModalProps> = ({ isOpen, onClose }) => {
             if (!mintAddress.trim()) return 'Token Mint Address is required for SPL transfers.';
             
             // Validar si es un mint válido
-            try {
-                new PublicKey(mintAddress.trim());
-            } catch {
+            if (!isValidBase58Address(mintAddress)) {
                 return 'The mint address is not a valid Solana address.';
             }
 
@@ -206,6 +247,12 @@ export const SendModal: FC<SendModalProps> = ({ isOpen, onClose }) => {
                 // mintAddress is only passed for SPL — undefined for SOL
                 ...(transferType === 'spl' && { mintAddress: mintAddress.trim() }),
             });
+
+            logAuditEvent(
+                'transaction',
+                'transfer_success',
+                `Successfully sent ${amount} ${transferType === 'sol' ? 'SOL' : 'SPL'} to ${recipientAddress.trim()}`
+            );
 
             notify({
                 type:    'success',
@@ -341,7 +388,7 @@ export const SendModal: FC<SendModalProps> = ({ isOpen, onClose }) => {
                         style={inputStyle}
                         placeholder="Enter wallet address"
                         value={recipientAddress}
-                        onChange={e => { setRecipientAddress(e.target.value); setInlineError(null); }}
+                        onChange={e => { setRecipientAddress(sanitizeInput(e.target.value)); setInlineError(null); }}
                         disabled={loading}
                         spellCheck={false}
                     />
@@ -369,7 +416,7 @@ export const SendModal: FC<SendModalProps> = ({ isOpen, onClose }) => {
                         min="0"
                         step="any"
                         value={amount}
-                        onChange={e => { setAmount(e.target.value); setInlineError(null); }}
+                        onChange={e => { setAmount(sanitizeInput(e.target.value)); setInlineError(null); }}
                         disabled={loading}
                     />
                 </div>
@@ -382,7 +429,7 @@ export const SendModal: FC<SendModalProps> = ({ isOpen, onClose }) => {
                             style={inputStyle}
                             placeholder="Enter token mint address"
                             value={mintAddress}
-                            onChange={e => { setMintAddress(e.target.value); setInlineError(null); }}
+                            onChange={e => { setMintAddress(sanitizeInput(e.target.value)); setInlineError(null); }}
                             disabled={loading}
                             spellCheck={false}
                         />
@@ -415,6 +462,21 @@ export const SendModal: FC<SendModalProps> = ({ isOpen, onClose }) => {
                     </p>
                 )}
 
+                {/* ── Inline warning ── */}
+                {inlineWarning && !inlineError && (
+                    <p style={{
+                        color:        '#dea001',
+                        fontSize:     13,
+                        margin:       0,
+                        padding:      '10px 14px',
+                        backgroundColor: 'rgba(222,160,1,0.08)',
+                        borderRadius: 8,
+                        border:       `1px solid rgba(222,160,1,0.20)`,
+                    }}>
+                        {inlineWarning}
+                    </p>
+                )}
+
                 {/* ── Fee estimate row ── */}
                 <div style={{
                     display:        'flex',
@@ -430,28 +492,28 @@ export const SendModal: FC<SendModalProps> = ({ isOpen, onClose }) => {
                 {/* ── Send button ── */}
                 <button
                     onClick={handleSend}
-                    disabled={loading || !publicKey}
+                    disabled={loading || !publicKey || isPhishing}
                     style={{
                         width:           '100%',
                         padding:         '16px 0',
-                        backgroundColor: loading || !publicKey ? 'rgba(220,158,0,0.35)' : C.gold,
+                        backgroundColor: loading || !publicKey || isPhishing ? 'rgba(220,158,0,0.35)' : C.gold,
                         color:           C.bg,
                         border:          'none',
                         borderRadius:    14,
                         fontSize:        16,
                         fontWeight:      800,
-                        cursor:          loading || !publicKey ? 'not-allowed' : 'pointer',
+                        cursor:          loading || !publicKey || isPhishing ? 'not-allowed' : 'pointer',
                         transition:      'opacity 0.18s',
                         letterSpacing:   '0.3px',
                     }}
                     onMouseEnter={e => {
-                        if (!loading && publicKey) e.currentTarget.style.opacity = '0.88';
+                        if (!loading && publicKey && !isPhishing) e.currentTarget.style.opacity = '0.88';
                     }}
                     onMouseLeave={e => {
                         e.currentTarget.style.opacity = '1';
                     }}
                 >
-                    {loading ? 'Sending...' : !publicKey ? 'Wallet not connected' : 'Send Transaction'}
+                    {loading ? 'Sending...' : !publicKey ? 'Wallet not connected' : isPhishing ? 'Phishing Blocked' : 'Send Transaction'}
                 </button>
             </div>
         </div>

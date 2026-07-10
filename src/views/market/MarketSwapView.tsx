@@ -7,6 +7,8 @@ import { getJupiterQuote, getJupiterTokens, JupiterQuoteResponse, JupiterToken, 
 import { executeSwap } from '../../utils/solana/swap';
 import { notify } from '../../utils/notifications';
 import { handleError } from '../../utils/errorHandler';
+import { sanitizeInput, isLargeTransaction } from '../../utils/security';
+import { logAuditEvent } from '../../utils/security/auditLogger';
 
 interface MarketSwapViewProps {
   isOpen: boolean;
@@ -24,6 +26,7 @@ export const MarketSwapView: FC<MarketSwapViewProps> = ({ isOpen, onClose, solBa
   const [quoteResponse, setQuoteResponse] = useState<JupiterQuoteResponse | null>(null);
   const [loadingQuote, setLoadingQuote] = useState(false);
   const [quoteError, setQuoteError] = useState<string | null>(null);
+  const [inlineWarning, setInlineWarning] = useState<string | null>(null);
   const [isSwapping, setIsSwapping] = useState(false);
 
   const { connection } = useConnection();
@@ -39,6 +42,7 @@ export const MarketSwapView: FC<MarketSwapViewProps> = ({ isOpen, onClose, solBa
       setAmount('');
       setQuoteResponse(null);
       setQuoteError(null);
+      setInlineWarning(null);
     }
   }, [isOpen]);
 
@@ -65,7 +69,16 @@ export const MarketSwapView: FC<MarketSwapViewProps> = ({ isOpen, onClose, solBa
     if (isNaN(numAmount) || numAmount <= 0) {
       setQuoteResponse(null);
       setQuoteError(null);
+      setInlineWarning(null);
       return;
+    }
+
+    // Check for large transaction warning
+    const isLarge = isLargeTransaction(numAmount, payMint === TOKENS.SOL.mint ? 'sol' : 'spl');
+    if (isLarge) {
+      setInlineWarning(`Warning: You are swapping a large amount of funds (${numAmount} ${payTokenInfo.symbol}). Please verify the details.`);
+    } else {
+      setInlineWarning(null);
     }
 
     setLoadingQuote(true);
@@ -126,6 +139,13 @@ export const MarketSwapView: FC<MarketSwapViewProps> = ({ isOpen, onClose, solBa
         sendTransaction,
         quoteResponse
       });
+
+      logAuditEvent(
+        'transaction',
+        'swap_success',
+        `Successfully swapped ${amount} ${payTokenInfo.symbol} for ${receiveAmountDisplay} ${recTokenInfo.symbol}`
+      );
+
       notify({ type: 'success', message: 'Swap successful!', txid: signature });
       setAmount('');
       setQuoteResponse(null);
@@ -198,7 +218,7 @@ export const MarketSwapView: FC<MarketSwapViewProps> = ({ isOpen, onClose, solBa
                 type="number"
                 placeholder="0.00"
                 value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                onChange={(e) => setAmount(sanitizeInput(e.target.value))}
                 className="bg-transparent border-none outline-none text-white text-4xl font-bold w-full p-0"
               />
               <div className="flex bg-[#181c27] border rounded-full px-3 py-2 shrink-0 items-center gap-2" style={{ borderColor: C.border }}>
@@ -271,7 +291,12 @@ export const MarketSwapView: FC<MarketSwapViewProps> = ({ isOpen, onClose, solBa
                 {quoteError}
               </p>
             )}
-            {!quoteError && (
+            {inlineWarning && !quoteError && (
+              <p className="text-[#dea001] text-[13px] mt-3 font-medium">
+                {inlineWarning}
+              </p>
+            )}
+            {!quoteError && !inlineWarning && (
               <p className="text-[#7a8fa6] text-[13px] mt-3 font-medium">
                 Balance: {recMint === TOKENS.SOL.mint ? solBalance.toFixed(4) : '0.00'} {recTokenInfo.symbol}
               </p>

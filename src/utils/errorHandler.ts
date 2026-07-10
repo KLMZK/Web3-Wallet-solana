@@ -108,28 +108,32 @@ export function handleError(error: unknown, context?: string): WalletError {
     // Always print the raw error so the developer can debug via DevTools
     console.error(`${prefix}`, error);
 
+    let classified: Pick<WalletError, 'code' | 'message'>;
+    let rawError: unknown = error;
+
     // ── Case 1: Standard JavaScript Error object ───────────────────────────
     if (error instanceof Error) {
-        const classified = classifySolanaError(error.message);
-        return {
-            ...classified,
-            raw: error,
-        };
+        classified = classifySolanaError(error.message);
     }
-
     // ── Case 2: Plain string was thrown (e.g. throw "something failed") ───
-    if (typeof error === 'string') {
-        const classified = classifySolanaError(error);
-        return {
-            ...classified,
-            raw: error,
+    else if (typeof error === 'string') {
+        classified = classifySolanaError(error);
+    }
+    // ── Case 3: Completely unknown shape (object, null, number, etc.) ──────
+    else {
+        classified = {
+            code: 'UNKNOWN_ERROR',
+            message: 'An unexpected error occurred. Please try again.',
         };
     }
 
-    // ── Case 3: Completely unknown shape (object, null, number, etc.) ──────
+    // Trigger global connection loss screen if it's a network/connection error
+    if (classified.code === 'NETWORK_ERROR' && typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('xpectre_connection_lost'));
+    }
+
     return {
-        code: 'UNKNOWN_ERROR',
-        message: 'An unexpected error occurred. Please try again.',
-        raw: error,
+        ...classified,
+        raw: rawError,
     };
 }
