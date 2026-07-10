@@ -1,4 +1,4 @@
-import { FC, useState, useEffect } from 'react';
+import { FC, useState, useEffect, useRef } from 'react';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { ChevronDown, ArrowDown } from 'lucide-react';
 
@@ -20,6 +20,8 @@ export const MarketSwapView: FC<MarketSwapViewProps> = ({ isOpen, onClose, solBa
   const [tokens, setTokens] = useState<JupiterToken[]>([]);
   const [payMint, setPayMint] = useState<string>(TOKENS.SOL.mint);
   const [recMint, setRecMint] = useState<string>(TOKENS.USDC.mint);
+  const [payDropdownOpen, setPayDropdownOpen] = useState(false);
+  const [recDropdownOpen, setRecDropdownOpen] = useState(false);
 
   const [amount, setAmount] = useState<string>('');
   const [slippage, setSlippage] = useState<number>(50); // 50 bps = 0.5%
@@ -221,23 +223,36 @@ export const MarketSwapView: FC<MarketSwapViewProps> = ({ isOpen, onClose, solBa
                 onChange={(e) => setAmount(sanitizeInput(e.target.value))}
                 className="bg-transparent border-none outline-none text-white text-4xl font-bold w-full p-0"
               />
-              <div className="flex bg-[#181c27] border rounded-full px-3 py-2 shrink-0 items-center gap-2" style={{ borderColor: C.border }}>
-                <select
-                  value={payMint}
-                  onChange={(e) => setPayMint(e.target.value)}
-                  className="bg-transparent text-white font-bold text-[15px] outline-none cursor-pointer border-none appearance-none pr-2"
+              <div className="relative shrink-0">
+                <button
+                  onClick={() => setPayDropdownOpen(!payDropdownOpen)}
+                  className="flex bg-[#181c27] border rounded-full px-4 py-2.5 items-center gap-2 cursor-pointer transition-all hover:bg-white/5"
+                  style={{ borderColor: payDropdownOpen ? C.gold : C.border, boxShadow: payDropdownOpen ? `0 0 0 1px ${C.gold}` : 'none' }}
                 >
-                  {tokens.length === 0 ? (
-                    <option value={payMint}>{payTokenInfo.symbol}</option>
-                  ) : (
-                    tokens.map(t => (
-                      <option key={t.address} value={t.address} className="bg-[#181c27]">
-                        {t.symbol}
-                      </option>
-                    ))
-                  )}
-                </select>
-                <ChevronDown size={16} className="text-[#7a8fa6]" />
+                  <span className="text-white font-bold text-[15px]">{payTokenInfo.symbol}</span>
+                  <ChevronDown size={16} className="text-[#7a8fa6] transition-transform duration-200" style={{ transform: payDropdownOpen ? 'rotate(180deg)' : 'none' }} />
+                </button>
+                
+                {payDropdownOpen && (
+                  <div className="absolute top-full right-0 mt-2 w-48 rounded-2xl border shadow-2xl z-[60] overflow-hidden animate-in slide-in-from-top-2 duration-200" style={{ backgroundColor: C.surfaceSolid, borderColor: C.border }}>
+                    <div className="max-h-60 overflow-y-auto scrollbar-hide py-1">
+                      {tokens.length === 0 ? (
+                        <div className="px-4 py-3 text-white text-[15px] font-bold hover:bg-white/5 cursor-pointer" onClick={() => setPayDropdownOpen(false)}>{payTokenInfo.symbol}</div>
+                      ) : (
+                        tokens.map(t => (
+                          <div 
+                            key={t.address} 
+                            onClick={() => { setPayMint(t.address); setPayDropdownOpen(false); }}
+                            className="px-4 py-3 text-[15px] font-bold hover:bg-white/5 cursor-pointer transition-colors"
+                            style={{ color: t.address === payMint ? C.gold : '#fff' }}
+                          >
+                            {t.symbol}
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
             <p className="text-[#7a8fa6] text-[13px] mt-3 font-medium">
@@ -267,23 +282,36 @@ export const MarketSwapView: FC<MarketSwapViewProps> = ({ isOpen, onClose, solBa
                 readOnly
                 className="bg-transparent border-none outline-none text-white text-4xl font-bold w-full p-0 placeholder:text-[#7a8fa6]/30"
               />
-              <div className="flex bg-[#181c27] border rounded-full px-3 py-2 shrink-0 items-center gap-2" style={{ borderColor: C.border }}>
-                <select
-                  value={recMint}
-                  onChange={(e) => setRecMint(e.target.value)}
-                  className="bg-transparent text-white font-bold text-[15px] outline-none cursor-pointer border-none appearance-none pr-2"
+              <div className="relative shrink-0">
+                <button
+                  onClick={() => setRecDropdownOpen(!recDropdownOpen)}
+                  className="flex bg-[#181c27] border rounded-full px-4 py-2.5 items-center gap-2 cursor-pointer transition-all hover:bg-white/5"
+                  style={{ borderColor: recDropdownOpen ? C.gold : C.border, boxShadow: recDropdownOpen ? `0 0 0 1px ${C.gold}` : 'none' }}
                 >
-                  {tokens.length === 0 ? (
-                    <option value={recMint}>{recTokenInfo.symbol}</option>
-                  ) : (
-                    tokens.map(t => (
-                      <option key={t.address} value={t.address} className="bg-[#181c27]">
-                        {t.symbol}
-                      </option>
-                    ))
-                  )}
-                </select>
-                <ChevronDown size={16} className="text-[#7a8fa6]" />
+                  <span className="text-white font-bold text-[15px]">{recTokenInfo.symbol}</span>
+                  <ChevronDown size={16} className="text-[#7a8fa6] transition-transform duration-200" style={{ transform: recDropdownOpen ? 'rotate(180deg)' : 'none' }} />
+                </button>
+                
+                {recDropdownOpen && (
+                  <div className="absolute top-full right-0 mt-2 w-48 rounded-2xl border shadow-2xl z-[60] overflow-hidden animate-in slide-in-from-top-2 duration-200" style={{ backgroundColor: C.surfaceSolid, borderColor: C.border }}>
+                    <div className="max-h-60 overflow-y-auto scrollbar-hide py-1">
+                      {tokens.length === 0 ? (
+                        <div className="px-4 py-3 text-white text-[15px] font-bold hover:bg-white/5 cursor-pointer" onClick={() => setRecDropdownOpen(false)}>{recTokenInfo.symbol}</div>
+                      ) : (
+                        tokens.map(t => (
+                          <div 
+                            key={t.address} 
+                            onClick={() => { setRecMint(t.address); setRecDropdownOpen(false); }}
+                            className="px-4 py-3 text-[15px] font-bold hover:bg-white/5 cursor-pointer transition-colors"
+                            style={{ color: t.address === recMint ? C.gold : '#fff' }}
+                          >
+                            {t.symbol}
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
             {quoteError && (

@@ -2,7 +2,7 @@ import { FC, useState, useEffect } from 'react';
 import { Copy, RefreshCcw, LogOut, Shield, Trash2, CheckCircle, Settings, AlertTriangle } from 'lucide-react';
 import Toggle from '../../components/ui/Toggle';
 import { useCopyToClipboard } from '../../hooks/useCopyToClipboard';
-import WalletButton from '../../components/ui/WalletButton';
+import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 
 import { C } from '../../utils/theme';
 import { getAuditEvents, clearAuditEvents, logAuditEvent, AuditEvent } from '../../utils/security/auditLogger';
@@ -27,6 +27,7 @@ export const SettingsView: FC<SettingsViewProps> = ({
   onDisconnect,
 }) => {
   const { copy } = useCopyToClipboard();
+  const { setVisible } = useWalletModal();
   const [logs, setLogs] = useState<AuditEvent[]>([]);
 
   useEffect(() => {
@@ -83,12 +84,13 @@ export const SettingsView: FC<SettingsViewProps> = ({
           </button>
 
           <div className="border-b border-[#dea001]/10">
-            <WalletButton
-              className="!w-full !flex !items-center !justify-start !gap-3 !p-4 !bg-transparent !border-none !text-white !cursor-pointer hover:!bg-white/[0.02] !transition-colors !rounded-none !h-auto !text-[15px] !font-semibold !shadow-none"
+            <button
+              onClick={() => setVisible(true)}
+              className="w-full flex items-center justify-start gap-3 p-4 bg-transparent border-none text-white cursor-pointer hover:bg-white/[0.02] transition-colors rounded-none h-auto text-[15px] font-semibold shadow-none"
             >
               <RefreshCcw size={18} className="text-[#7a8fa6]" />
               <span>Change wallet</span>
-            </WalletButton>
+            </button>
           </div>
 
           <button

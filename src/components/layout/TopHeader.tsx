@@ -10,7 +10,7 @@ import {
 import HexLogo from '../ui/HexLogo';
 import Toggle from '../ui/Toggle';
 import { useCopyToClipboard } from '../../hooks/useCopyToClipboard';
-import WalletButton from '../ui/WalletButton';
+import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 
 import { C } from '../../utils/theme';
 
@@ -37,6 +37,7 @@ const TopHeader: FC<TopHeaderProps> = ({
   setAutoConnect,
   onDisconnect,
 }) => {
+  const { setVisible } = useWalletModal();
   const [walletOpen, setWalletOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -121,12 +122,16 @@ const TopHeader: FC<TopHeaderProps> = ({
               </button>
 
               {/* Change wallet — opens the wallet adapter modal */}
-              <WalletButton
-                className="!flex !items-center !gap-2.5 !px-3 !py-2.5 !rounded-lg !bg-transparent !border-none !text-white !cursor-pointer hover:!bg-white/5 !text-[13px] !font-medium !text-left !shadow-none !h-auto !justify-start"
+              <button
+                onClick={() => {
+                  setVisible(true);
+                  setWalletOpen(false);
+                }}
+                className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg bg-transparent border-none text-white cursor-pointer hover:bg-white/5 text-[13px] font-medium text-left shadow-none h-auto justify-start"
               >
                 <RefreshCcw size={16} className="text-[#7a8fa6]" />
                 <span>Change wallet</span>
-              </WalletButton>
+              </button>
 
               <div className="h-[1px] my-1" style={{ backgroundColor: C.border }} />
 
