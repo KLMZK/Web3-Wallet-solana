@@ -230,7 +230,13 @@ export const HomeView: FC = () => {
             splTokens={splTokens}
             loadingTokens={loadingTokens}
             setActiveTab={setActiveTab}
-            onBuyClick={() => setBuyModalOpen(true)}
+            onBuyClick={() => {
+              if (networkUI === 'Mainnet') {
+                setBuyModalOpen(true);
+              } else {
+                notify({ type: 'error', message: 'Buying SOL is only available on Mainnet.' });
+              }
+            }}
             onSendClick={() => setSendModalOpen(true)}
             onSwapClick={() => setSwapModalOpen(true)}
             onReceiveClick={() => setReceiveModalOpen(true)}
