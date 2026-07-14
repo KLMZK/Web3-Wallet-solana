@@ -75,6 +75,9 @@ export function handleError(error: unknown, context?: string): WalletError {
     // ── Case 1: Standard JavaScript Error object ───────────────────────────
     if (error instanceof Error) {
         const classified = classifySolanaError(error.message);
+        if (classified.code === ERROR_CODES.NETWORK_ERROR && typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('xpectre_connection_lost'));
+        }
         return {
             ...classified,
             raw: error,
@@ -84,6 +87,9 @@ export function handleError(error: unknown, context?: string): WalletError {
     // ── Case 2: Plain string was thrown (e.g. throw "something failed") ───
     if (typeof error === 'string') {
         const classified = classifySolanaError(error);
+        if (classified.code === ERROR_CODES.NETWORK_ERROR && typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('xpectre_connection_lost'));
+        }
         return {
             ...classified,
             raw: error,

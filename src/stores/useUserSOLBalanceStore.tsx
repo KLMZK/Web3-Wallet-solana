@@ -18,7 +18,9 @@ const useUserSOLBalanceStore = create<UserSOLBalanceStore>((set) => ({
         if (balance === null) return;
 
         set({ balance });
-        console.log('Balance updated:', balance, 'SOL');
+        if (process.env.NODE_ENV === 'development') {
+            console.log('Balance updated:', balance, 'SOL');
+        }
     },
 }));
 

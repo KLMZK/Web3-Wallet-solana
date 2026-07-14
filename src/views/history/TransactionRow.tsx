@@ -15,6 +15,7 @@ import { FC } from 'react';
 import { ArrowUpRight, ArrowDownLeft, ExternalLink } from 'lucide-react';
 import { ParsedTransaction, truncateAddress } from '../../hooks/useTransactionHistory';
 import { C } from '../../utils/theme';
+import { isPhishingAddress } from '../../utils/security';
 
 interface TransactionRowProps {
   transaction: ParsedTransaction;
@@ -26,6 +27,7 @@ export const TransactionRow: FC<TransactionRowProps> = ({
   onClick,
 }) => {
   const { type, amount, address, confirmationStatus, symbol } = transaction;
+  const isPhishing = isPhishingAddress(address);
 
   // Determine icon and colors based on transaction type
   const isReceived = type === 'received';
@@ -35,9 +37,9 @@ export const TransactionRow: FC<TransactionRowProps> = ({
     ? 'rgba(74, 222, 128, 0.1)'
     : isFailed
       ? 'rgba(255, 74, 74, 0.1)'
-      : 'rgba(255, 74, 74, 0.1)';
+      : 'rgba(255, 255, 255, 0.1)';
 
-  const iconColor = isReceived ? C.green : C.red;
+  const iconColor = isReceived ? C.green : isFailed ? C.red : '#ffffff';
 
   const icon = isReceived ? (
     <ArrowDownLeft size={18} />
@@ -72,6 +74,7 @@ export const TransactionRow: FC<TransactionRowProps> = ({
     <button
       onClick={onClick}
       className="w-full px-4 py-4 flex items-center gap-4 hover:bg-white/[0.02] transition-colors cursor-pointer border-0 text-left bg-transparent"
+      style={isPhishing ? { backgroundColor: 'rgba(255, 74, 74, 0.02)' } : undefined}
     >
       {/* Transaction type icon */}
       <div
@@ -87,13 +90,18 @@ export const TransactionRow: FC<TransactionRowProps> = ({
       {/* Transaction details */}
       <div className="flex-1 min-w-0">
         {/* Type and address */}
-        <div className="flex items-center gap-2 mb-1">
+        <div className="flex items-center gap-2 mb-1 flex-wrap">
           <p className="text-white text-[15px] font-semibold">
             {isReceived ? 'Received' : isFailed ? 'Failed' : 'Sent'}
           </p>
           <p className="text-[#7a8fa6] text-[13px]">
-            from {isReceived ? addressLabel : addressLabel}
+            {isFailed ? 'Error:' : isReceived ? 'from' : 'to'} {addressLabel}
           </p>
+          {isPhishing && (
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-[#ff4a4a]/20 text-[#ff4a4a] border border-[#ff4a4a]/40 animate-pulse">
+              ⚠️ PHISHING
+            </span>
+          )}
         </div>
 
         {/* Confirmation status */}

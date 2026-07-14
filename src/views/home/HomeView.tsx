@@ -2,6 +2,10 @@ import { FC, useEffect, useState, useCallback } from 'react';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 
+import { HistoryView } from '../history/HistoryView';
+
+import { RecentActivity } from '../../components/RecentActivity';
+
 // Scaffold hooks (unmodified)
 import useUserSOLBalanceStore from '../../stores/useUserSOLBalanceStore';
 import { notify } from '../../utils/notifications';
@@ -17,6 +21,7 @@ import ConnectWallet from '../../components/ConnectWallet';
 import { HomeContent, SPLToken, tokenColor } from './HomeContent';
 import { MarketSwapView } from '../market/MarketSwapView';
 import { SendModal } from '../send/SendModal';
+import { ReceiveModal } from '../receive/ReceiveModal';
 import { SettingsView } from '../settings/SettingsView';
 
 /* ─────────────────────────────────────────────
@@ -42,17 +47,39 @@ export const HomeView: FC = () => {
   const { autoConnect, setAutoConnect } = useAutoConnect();
 
   // ── UI state ──────────────────────────────
-  const [activeTab, setActiveTab] = useState<Tab>('home');
+  const [activeTabState, setActiveTabState] = useState<Tab>('home');
+  const [lastTabChange, setLastTabChange] = useState<number>(0);
+  const [globalSearch, setGlobalSearch] = useState('');
+
+  const setActiveTab = useCallback(
+    (tab: Tab) => {
+      const now = Date.now();
+      if (now - lastTabChange < 800) return; // 800ms cooldown to avoid API spam
+      setLastTabChange(now);
+      setActiveTabState(tab);
+      if (tab !== 'history') {
+        setGlobalSearch('');
+      }
+    },
+    [lastTabChange]
+  );
+  
+  const handleGlobalSearch = useCallback((query: string) => {
+    setGlobalSearch(query);
+    setActiveTab('history');
+  }, [setActiveTab]);
   const [splTokens, setSplTokens] = useState<SPLToken[]>([]);
   const [loadingTokens, setLoadingTokens] = useState(false);
   const [solPrice, setSolPrice] = useState<number | null>(null);
+  const [solPriceChange, setSolPriceChange] = useState<number | null>(null);
   const [sendModalOpen, setSendModalOpen] = useState(false);
   const [swapModalOpen, setSwapModalOpen] = useState(false);
+  const [receiveModalOpen, setReceiveModalOpen] = useState(false);
 
   // Map networkConfiguration hook value to UI label
   const networkUI: NetworkUI =
     networkConfiguration === 'mainnet-beta' ? 'Mainnet' :
-    networkConfiguration === 'testnet' ? 'Testnet' : 'Devnet';
+      networkConfiguration === 'testnet' ? 'Testnet' : 'Devnet';
 
   const setNetworkUI = useCallback(
     (n: NetworkUI) => {
@@ -70,12 +97,15 @@ export const HomeView: FC = () => {
     const fetchPrice = async () => {
       try {
         const r = await fetch(
-          'https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd',
+          'https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd&include_24hr_change=true',
           { signal: AbortSignal.timeout(8000) }
         );
         if (!r.ok) throw new Error('CoinGecko unavailable');
         const d = await r.json();
-        if (mounted && d?.solana?.usd) setSolPrice(d.solana.usd);
+        if (mounted && d?.solana?.usd) {
+          setSolPrice(d.solana.usd);
+          setSolPriceChange(d.solana.usd_24h_change ?? null);
+        }
       } catch {
         try {
           const r2 = await fetch(
@@ -136,7 +166,7 @@ export const HomeView: FC = () => {
 
     // 1. Initial fetch on mount or wallet change
     getUserSOLBalance(publicKey, connection);
-    
+
     // 2. Subscribe to wallet account changes (fires when SOL balance changes, e.g. paying fees)
     const subscriptionId = connection.onAccountChange(
       publicKey,
@@ -179,48 +209,49 @@ export const HomeView: FC = () => {
   ═══════════════════════════════════════════ */
   return (
     <>
-    <DashboardLayout
-      activeTab={activeTab}
-      setActiveTab={setActiveTab}
-      publicKeyStr={publicKeyStr}
-      networkUI={networkUI}
-      setNetworkUI={setNetworkUI}
-      autoConnect={autoConnect}
-      setAutoConnect={setAutoConnect}
-      onDisconnect={handleDisconnect}
-    >
-      {activeTab === 'home' && (
-        <HomeContent
-          balance={balance}
-          solPrice={solPrice}
-          splTokens={splTokens}
-          loadingTokens={loadingTokens}
-          setActiveTab={setActiveTab}
-          onSendClick={() => setSendModalOpen(true)}
-          onSwapClick={() => setSwapModalOpen(true)}
-        />
-      )}
+      <DashboardLayout
+        activeTab={activeTabState}
+        setActiveTab={setActiveTab}
+        publicKeyStr={publicKeyStr}
+        networkUI={networkUI}
+        setNetworkUI={setNetworkUI}
+        autoConnect={autoConnect}
+        setAutoConnect={setAutoConnect}
+        onDisconnect={handleDisconnect}
+        onGlobalSearch={handleGlobalSearch}
+      >
+        {activeTabState === 'home' && (
+          <HomeContent
+            balance={balance}
+            solPrice={solPrice}
+            solPriceChange={solPriceChange}
+            splTokens={splTokens}
+            loadingTokens={loadingTokens}
+            setActiveTab={setActiveTab}
+            onSendClick={() => setSendModalOpen(true)}
+            onSwapClick={() => setSwapModalOpen(true)}
+            onReceiveClick={() => setReceiveModalOpen(true)}
+          />
+        )}
 
-      {activeTab === 'history' && (
-        <div className="flex flex-col items-center justify-center h-full text-[#7a8fa6] pt-20">
-            <h2 className="text-2xl font-bold text-white mb-2">Transaction History</h2>
-            <p>Coming soon...</p>
-        </div>
-      )}
+        {activeTabState === 'history' && (
+          <HistoryView initialSearch={globalSearch} />
+        )}
 
-      {activeTab === 'settings' && (
-        <SettingsView
-          publicKeyStr={publicKeyStr}
-          networkUI={networkUI}
-          setNetworkUI={setNetworkUI}
-          autoConnect={autoConnect}
-          setAutoConnect={setAutoConnect}
-          onDisconnect={handleDisconnect}
-        />
-      )}
-    </DashboardLayout>
+        {activeTabState === 'settings' && (
+          <SettingsView
+            publicKeyStr={publicKeyStr}
+            networkUI={networkUI}
+            setNetworkUI={setNetworkUI}
+            autoConnect={autoConnect}
+            setAutoConnect={setAutoConnect}
+            onDisconnect={handleDisconnect}
+          />
+        )}
+      </DashboardLayout>
       <SendModal isOpen={sendModalOpen} onClose={() => setSendModalOpen(false)} />
       <MarketSwapView isOpen={swapModalOpen} onClose={() => setSwapModalOpen(false)} solBalance={balance} />
+      <ReceiveModal isOpen={receiveModalOpen} onClose={() => setReceiveModalOpen(false)} />
     </>
   );
 };

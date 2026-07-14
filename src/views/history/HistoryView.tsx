@@ -16,16 +16,15 @@ import { FC, useState, useEffect, useRef, useCallback } from 'react';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import { AlertCircle, Loader } from 'lucide-react';
 
-
 // Custom hook and utilities
 import { useTransactionHistory, ParsedTransaction } from '../../hooks/useTransactionHistory';
 import { getExplorerUrl } from '../../utils/explorer';
 import { C } from '../../utils/theme';
+import { isValidBase58Address, sanitizeInput } from '../../utils/security';
 
 // Sub-components (will be created next)
 import { HistoryFilters } from './HistoryFilters';
 import { TransactionRow } from './TransactionRow';
-
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -129,19 +128,19 @@ function groupByDate(transactions: ParsedTransaction[]): GroupedTransactions[] {
 // MAIN COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════
 
-export const HistoryView: FC = () => {
+export const HistoryView: FC<{ initialSearch?: string }> = ({ initialSearch = '' }) => {
   const { publicKey } = useWallet();
   const { connection } = useConnection();
 
   // Fetch transaction history
-  const { transactions, loading, error, hasMore, fetchMore } = useTransactionHistory(
+  const { transactions, loading, error, hasMore, fetchMore, refresh } = useTransactionHistory(
     publicKey,
     connection
   );
 
   // UI state for filters and search
   const [filterType, setFilterType] = useState<FilterType>('all');
-  const [searchAddress, setSearchAddress] = useState('');
+  const [searchAddress, setSearchAddress] = useState(initialSearch);
 
   // Ref for infinite scroll
   const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -172,10 +171,14 @@ export const HistoryView: FC = () => {
   }, [hasMore, loading, fetchMore]);
 
   // ─────────────────────────────────────────────────────────────────────────
-  // Apply filters and grouping
+  // Apply filters, validation and grouping
   // ─────────────────────────────────────────────────────────────────────────
 
-  const filteredTransactions = filterTransactions(transactions, filterType, searchAddress);
+  const isSearchActive = searchAddress.trim().length > 0;
+  const sanitizedSearch = sanitizeInput(searchAddress);
+  
+  // Removed strict Base58 validation to allow partial matching
+  const filteredTransactions = filterTransactions(transactions, filterType, sanitizedSearch);
   const groupedTransactions = groupByDate(filteredTransactions);
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -216,16 +219,23 @@ export const HistoryView: FC = () => {
       {/* Error state */}
       {error && !loading && (
         <div
-          className="rounded-2xl p-6 flex items-start gap-4 mb-8"
+          className="rounded-2xl p-6 flex items-center justify-between gap-4 mb-8"
           style={{ backgroundColor: C.surface, border: `1px solid ${C.red}40` }}
         >
-          <AlertCircle size={20} className="text-[#ff4a4a] mt-1 shrink-0" />
-          <div>
-            <p className="text-white font-semibold mb-1">Failed to load transactions</p>
-            <p className="text-[#7a8fa6] text-[14px]">{error}</p>
+          <div className="flex items-center gap-3">
+            <AlertCircle size={20} className="text-[#ff4a4a] shrink-0" />
+            <p className="text-white font-semibold">Ocurrió un error</p>
           </div>
+          <button
+            onClick={() => refresh()}
+            className="px-4 py-2 bg-[#ff4a4a]/10 hover:bg-[#ff4a4a]/20 text-[#ff4a4a] rounded-xl font-bold text-[14px] transition-colors cursor-pointer border-none"
+          >
+            Reintentar
+          </button>
         </div>
       )}
+
+
 
       {/* Loading state (initial) */}
       {loading && transactions.length === 0 && (
