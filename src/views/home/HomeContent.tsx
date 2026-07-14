@@ -9,6 +9,8 @@ import SkeletonRow from '../../components/ui/SkeletonRow';
 import { Tab } from '../../components/layout/Sidebar';
 import { RecentActivity } from '../../components/RecentActivity';
 
+import { PriceChart } from '../../components/PriceChart';
+
 import { C } from '../../utils/theme';
 
 // Token brand colors for known SPL token symbols
@@ -71,10 +73,10 @@ export const HomeContent: FC<HomeContentProps> = ({
     solPriceChange === null || isNaN(solPriceChange)
       ? C.muted
       : solPriceChange > 0
-      ? C.green
-      : solPriceChange < 0
-      ? C.red
-      : C.muted;
+        ? C.green
+        : solPriceChange < 0
+          ? C.red
+          : C.muted;
 
   return (
     <div className="flex flex-col gap-8 w-full animate-in fade-in duration-300">
@@ -152,6 +154,8 @@ export const HomeContent: FC<HomeContentProps> = ({
         </div>
       </div>
 
+      <PriceChart />
+
       {/* ── Your Assets ── */}
       <div>
         <div className="flex justify-between items-end mb-4 px-1">
@@ -197,9 +201,8 @@ export const HomeContent: FC<HomeContentProps> = ({
             splTokens.map((token, i) => (
               <div
                 key={token.mint}
-                className={`flex items-center gap-4 px-4 py-4 hover:bg-white/[0.02] transition-colors ${
-                  i < splTokens.length - 1 ? 'border-b' : ''
-                }`}
+                className={`flex items-center gap-4 px-4 py-4 hover:bg-white/[0.02] transition-colors ${i < splTokens.length - 1 ? 'border-b' : ''
+                  }`}
                 style={{ borderColor: C.border }}
               >
                 <div
