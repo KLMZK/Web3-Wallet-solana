@@ -7,10 +7,10 @@ import {
   LogOut,
   Settings,
 } from 'lucide-react';
-import HexLogo from '../ui/HexLogo';
 import Toggle from '../ui/Toggle';
 import { useCopyToClipboard } from '../../hooks/useCopyToClipboard';
-import WalletButton from '../ui/WalletButton';
+import { useWalletModal } from '@solana/wallet-adapter-react-ui';
+import { useWallet } from '@solana/wallet-adapter-react';
 
 import { C } from '../../utils/theme';
 
@@ -23,6 +23,8 @@ interface TopHeaderProps {
   autoConnect: boolean;
   setAutoConnect: (v: boolean) => void;
   onDisconnect: () => void;
+  onGlobalSearch?: (query: string) => void;
+  onRequestAirdrop?: () => void; // <--- Propiedad añadida para el Airdrop
 }
 
 function truncate(addr: string) {
@@ -36,10 +38,24 @@ const TopHeader: FC<TopHeaderProps> = ({
   autoConnect,
   setAutoConnect,
   onDisconnect,
+  onGlobalSearch,
+  onRequestAirdrop, // <--- La recibimos aquí
 }) => {
+  const { setVisible } = useWalletModal();
+  const { wallet } = useWallet();
+  const isLocalWallet = wallet?.adapter.name === 'XpectreWallet';
   const [walletOpen, setWalletOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  const triggerSearch = () => {
+    const val = searchInputRef.current?.value.trim();
+    if (val && onGlobalSearch) {
+      onGlobalSearch(val);
+      if (searchInputRef.current) searchInputRef.current.value = '';
+    }
+  };
   const { copy } = useCopyToClipboard();
 
   // Close dropdowns on outside click
@@ -61,25 +77,38 @@ const TopHeader: FC<TopHeaderProps> = ({
 
   return (
     <header
-      className="w-full border-b sticky top-0 z-40 px-4 md:px-8 py-4 flex items-center justify-between gap-4 shrink-0"
+      className="w-full border-b z-40 px-4 md:px-8 py-4 flex items-center justify-between gap-4 shrink-0"
       style={{
         borderColor: C.border,
-        backgroundColor: 'rgba(16, 19, 28, 0.7)',
+        backgroundColor: 'rgba(16, 19, 28, 0.95)',
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',
       }}
     >
       {/* Mobile Logo — hidden on desktop (sidebar has it) */}
-      <div className="md:hidden flex items-center">
-        <HexLogo size={24} />
+      <div className="md:hidden flex items-center shrink-0">
+        <img
+          src="/long.PNG"
+          alt="Xpectre Logo"
+          className="h-7 w-auto object-contain select-none"
+        />
       </div>
 
-      {/* Fluid Search Bar */}
       <div className="flex-1 max-w-2xl bg-white/[0.03] rounded-2xl px-4 py-2.5 flex items-center gap-2.5 border border-[#dea001]/10 transition-colors focus-within:border-[#dea001]/30">
-        <Search size={16} className="text-[#7a8fa6]" />
+        <button onClick={triggerSearch} className="bg-transparent border-0 p-0 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity" aria-label="Search">
+          <Search size={16} className="text-[#7a8fa6]" />
+        </button>
+        <label htmlFor="global-search" className="sr-only">Search assets, history</label>
         <input
-          placeholder="Search assets, history..."
+          ref={searchInputRef}
+          id="global-search"
+          placeholder="Search by wallet address..."
           className="bg-transparent border-none outline-none text-white w-full text-[14px] placeholder:text-[#7a8fa6]"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              triggerSearch();
+            }
+          }}
         />
       </div>
 
@@ -121,12 +150,16 @@ const TopHeader: FC<TopHeaderProps> = ({
               </button>
 
               {/* Change wallet — opens the wallet adapter modal */}
-              <WalletButton
-                className="!flex !items-center !gap-2.5 !px-3 !py-2.5 !rounded-lg !bg-transparent !border-none !text-white !cursor-pointer hover:!bg-white/5 !text-[13px] !font-medium !text-left !shadow-none !h-auto !justify-start"
+              <button
+                onClick={() => {
+                  setVisible(true);
+                  setWalletOpen(false);
+                }}
+                className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg bg-transparent border-none text-white cursor-pointer hover:bg-white/5 text-[13px] font-medium text-left shadow-none h-auto justify-start"
               >
                 <RefreshCcw size={16} className="text-[#7a8fa6]" />
                 <span>Change wallet</span>
-              </WalletButton>
+              </button>
 
               <div className="h-[1px] my-1" style={{ backgroundColor: C.border }} />
 
@@ -146,6 +179,8 @@ const TopHeader: FC<TopHeaderProps> = ({
         {/* Settings Gear Dropdown */}
         <div className="relative">
           <button
+            aria-label="Settings"
+            aria-expanded={settingsOpen}
             onClick={() => {
               setSettingsOpen(!settingsOpen);
               setWalletOpen(false);
@@ -168,15 +203,18 @@ const TopHeader: FC<TopHeaderProps> = ({
               style={{ backgroundColor: C.surfaceSolid, borderColor: C.border }}
             >
               {/* Autoconnect Toggle */}
-              <div className="flex items-center justify-between">
-                <span className="text-white text-[13px] font-semibold">Autoconnect</span>
-                <Toggle
-                  checked={autoConnect}
-                  onChange={() => setAutoConnect(!autoConnect)}
-                />
-              </div>
-
-              <div className="h-[1px]" style={{ backgroundColor: C.border }} />
+              {!isLocalWallet && (
+                <>
+                  <div className="flex items-center justify-between">
+                    <span className="text-white text-[13px] font-semibold">Autoconnect</span>
+                    <Toggle
+                      checked={autoConnect}
+                      onChange={() => setAutoConnect(!autoConnect)}
+                    />
+                  </div>
+                  <div className="h-[1px] my-4" style={{ backgroundColor: C.border }} />
+                </>
+              )}
 
               {/* Network Selector */}
               <div>
@@ -201,6 +239,28 @@ const TopHeader: FC<TopHeaderProps> = ({
                   ))}
                 </div>
               </div>
+
+              {/* Developer Tools (Airdrop) - ¡Solo aparece en Devnet! */}
+              {networkUI === 'Devnet' && (
+                <>
+                  <div className="h-[1px] mt-2 mb-1" style={{ backgroundColor: C.border }} />
+                  <div>
+                    <span className="text-[#dea001] text-[12px] font-semibold block mb-2 uppercase tracking-wide">
+                      Developer Tools
+                    </span>
+                    <button
+                      onClick={() => {
+                        if (onRequestAirdrop) onRequestAirdrop();
+                        setSettingsOpen(false); // Cierra el menú automáticamente
+                      }}
+                      className="w-full py-2.5 rounded-lg font-bold text-[13px] border-none cursor-pointer transition-all bg-[#dea001] text-black hover:bg-[#dea001]/90 shadow-[0_0_10px_rgba(222,160,1,0.2)]"
+                    >
+                      Request 1 SOL (Airdrop)
+                    </button>
+                  </div>
+                </>
+              )}
+
             </div>
           )}
         </div>

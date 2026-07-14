@@ -24,6 +24,16 @@ a {
   box-sizing: border-box;
 }
 
+/* Hide spin buttons for number inputs */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
 /* ─────────────────────────────────────────────
    Scrollbar Hiding
 ───────────────────────────────────────────── */
@@ -67,10 +77,16 @@ a {
   background: rgba(0, 0, 0, 0.7) !important;
   backdrop-filter: blur(8px) !important;
   z-index: 1 !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
 }
 
 /* 3. La cajita del menú: Al frente del fondo borroso (z-index alto) */
-.wallet-adapter-modal-container,
 .wallet-adapter-modal-wrapper {
   background-color: #1a2535 !important;
   z-index: 10 !important;

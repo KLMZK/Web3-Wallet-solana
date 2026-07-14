@@ -14,6 +14,7 @@ interface DashboardLayoutProps {
   autoConnect: boolean;
   setAutoConnect: (v: boolean) => void;
   onDisconnect: () => void;
+  onGlobalSearch?: (query: string) => void;
   children: ReactNode;
 }
 
@@ -26,6 +27,7 @@ const DashboardLayout: FC<DashboardLayoutProps> = ({
   autoConnect,
   setAutoConnect,
   onDisconnect,
+  onGlobalSearch,
   children,
 }) => {
   // Scroll to top on tab change
@@ -34,7 +36,7 @@ const DashboardLayout: FC<DashboardLayoutProps> = ({
   }, [activeTab]);
 
   return (
-    <div className="flex flex-col min-h-screen relative z-10 overflow-hidden">
+    <div className="flex flex-col h-screen relative z-10 overflow-hidden">
       <div className="flex flex-1 overflow-hidden h-screen">
         {/* Desktop Sidebar */}
         <Sidebar active={activeTab} onChange={setActiveTab} />
@@ -48,6 +50,7 @@ const DashboardLayout: FC<DashboardLayoutProps> = ({
             autoConnect={autoConnect}
             setAutoConnect={setAutoConnect}
             onDisconnect={onDisconnect}
+            onGlobalSearch={onGlobalSearch}
           />
 
           {/* Main Content Area */}
