@@ -3,6 +3,7 @@ import { Copy, RefreshCcw, LogOut, Shield, Trash2, CheckCircle, Settings, AlertT
 import Toggle from '../../components/ui/Toggle';
 import { useCopyToClipboard } from '../../hooks/useCopyToClipboard';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
+import { useWallet } from '@solana/wallet-adapter-react';
 
 import { C } from '../../utils/theme';
 import { getAuditEvents, clearAuditEvents, logAuditEvent, AuditEvent } from '../../utils/security/auditLogger';
@@ -28,6 +29,8 @@ export const SettingsView: FC<SettingsViewProps> = ({
 }) => {
   const { copy } = useCopyToClipboard();
   const { setVisible } = useWalletModal();
+  const { wallet } = useWallet();
+  const isLocalWallet = wallet?.adapter.name === 'XpectreWallet';
   const [logs, setLogs] = useState<AuditEvent[]>([]);
 
   useEffect(() => {
@@ -158,21 +161,23 @@ export const SettingsView: FC<SettingsViewProps> = ({
       )}
 
       {/* Preferences */}
-      <div>
-        <h2 className="text-white text-lg font-bold mb-4 px-1 tracking-wide">Preferences</h2>
-        <div
-          className="rounded-2xl border p-5 flex items-center justify-between"
-          style={{ backgroundColor: C.surface, borderColor: C.border }}
-        >
-          <div>
-            <span className="text-white text-[15px] font-semibold">Autoconnect</span>
-            <p className="text-[#7a8fa6] text-[12px] mt-1">
-              Automatically reconnect wallet on page reload
-            </p>
+      {!isLocalWallet && (
+        <div>
+          <h2 className="text-white text-lg font-bold mb-4 px-1 tracking-wide">Preferences</h2>
+          <div
+            className="rounded-2xl border p-5 flex items-center justify-between"
+            style={{ backgroundColor: C.surface, borderColor: C.border }}
+          >
+            <div>
+              <span className="text-white text-[15px] font-semibold">Autoconnect</span>
+              <p className="text-[#7a8fa6] text-[12px] mt-1">
+                Automatically reconnect wallet on page reload
+              </p>
+            </div>
+            <Toggle checked={autoConnect} onChange={handleAutoConnectChange} />
           </div>
-          <Toggle checked={autoConnect} onChange={handleAutoConnectChange} />
         </div>
-      </div>
+      )}
 
       {/* Security Audit Logs */}
       <div>

@@ -10,6 +10,7 @@ import {
 import Toggle from '../ui/Toggle';
 import { useCopyToClipboard } from '../../hooks/useCopyToClipboard';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
+import { useWallet } from '@solana/wallet-adapter-react';
 
 import { C } from '../../utils/theme';
 
@@ -41,6 +42,8 @@ const TopHeader: FC<TopHeaderProps> = ({
   onRequestAirdrop, // <--- La recibimos aquí
 }) => {
   const { setVisible } = useWalletModal();
+  const { wallet } = useWallet();
+  const isLocalWallet = wallet?.adapter.name === 'XpectreWallet';
   const [walletOpen, setWalletOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -200,15 +203,18 @@ const TopHeader: FC<TopHeaderProps> = ({
               style={{ backgroundColor: C.surfaceSolid, borderColor: C.border }}
             >
               {/* Autoconnect Toggle */}
-              <div className="flex items-center justify-between">
-                <span className="text-white text-[13px] font-semibold">Autoconnect</span>
-                <Toggle
-                  checked={autoConnect}
-                  onChange={() => setAutoConnect(!autoConnect)}
-                />
-              </div>
-
-              <div className="h-[1px]" style={{ backgroundColor: C.border }} />
+              {!isLocalWallet && (
+                <>
+                  <div className="flex items-center justify-between">
+                    <span className="text-white text-[13px] font-semibold">Autoconnect</span>
+                    <Toggle
+                      checked={autoConnect}
+                      onChange={() => setAutoConnect(!autoConnect)}
+                    />
+                  </div>
+                  <div className="h-[1px] my-4" style={{ backgroundColor: C.border }} />
+                </>
+              )}
 
               {/* Network Selector */}
               <div>

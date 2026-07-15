@@ -16,7 +16,6 @@ import { FC, useState, useEffect, useRef, useCallback } from 'react';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import { AlertCircle, Loader } from 'lucide-react';
 
-
 // Custom hook and utilities
 import { useTransactionHistory, ParsedTransaction } from '../../hooks/useTransactionHistory';
 import { getExplorerUrl } from '../../utils/explorer';
@@ -26,7 +25,6 @@ import { isValidBase58Address, sanitizeInput } from '../../utils/security';
 // Sub-components (will be created next)
 import { HistoryFilters } from './HistoryFilters';
 import { TransactionRow } from './TransactionRow';
-
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TYPES
