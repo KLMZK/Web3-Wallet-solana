@@ -44,7 +44,8 @@ yarn-error.log*
 *.json.bak
 
 *.env.local
-
+.env.local
+.env.test
 # Playwright
 node_modules/
 /test-results/
