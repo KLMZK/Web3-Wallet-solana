@@ -1,5 +1,6 @@
 import { FC, useEffect, useState, useCallback } from 'react';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
+import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 
 import { HistoryView } from '../history/HistoryView';
@@ -162,7 +163,6 @@ export const HomeView: FC = () => {
     else setSplTokens([]);
   }, [connected, publicKey, fetchSPLTokens]);
 
-  // ... (lines 48 to 164 are unchanged, but I must replace the exact target content provided below)
 
   // ── Fetch SOL & SPL Balances + Real-time Listener ─────────────────────
   useEffect(() => {
